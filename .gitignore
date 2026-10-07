@@ -2,7 +2,7 @@
 __pycache__/
 .venv
 
-docker/prod-compose.parsed.yaml
+prod-compose.parsed.yaml
 app.log
 misc
 rec.py
