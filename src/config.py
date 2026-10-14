@@ -8,14 +8,15 @@ from dotenv import load_dotenv
 
 from enums import PricingTier
 
-
 # Paths & Environment
 BASE_PATH = os.path.dirname(__file__)
 PROJECT_PATH = os.path.dirname(BASE_PATH)
 
-load_dotenv(os.path.join(
-    PROJECT_PATH, 
-    ".env" if not os.getenv("PYTEST_RUNNING") else ".env.test"))
+load_dotenv(
+    os.path.join(
+        PROJECT_PATH, ".env" if not os.getenv("PYTEST_VERSION") else ".env.test"
+    )
+)
 
 IS_PRODUCTION = os.getenv("IS_PRODUCTION", "false").strip() == "true"
 
