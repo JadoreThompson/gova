@@ -35,12 +35,12 @@ services:
       - 6379:6379
 
   http_server:
-    image: wifimemes/gova-backend
+    image: ${IMAGE_NAME:?}
     ports:
       - 8000:8000
     networks:
       - gova_network
-    command: http run
+    command: cd ./src && uv run uvicorn api.app:app --host 0.0.0.0 --port 8000
     deploy:
       labels:
         - "traefik.enable=true"
@@ -56,22 +56,22 @@ services:
         order: start-first
 
   moderator_orchestrator:
-    image: wifimemes/gova-backend
+    image: ${IMAGE_NAME:?}
     networks:
       - gova_network
-    command: orchestrator run
+    command: uv run src/main.py orchestrator run
 
   event_handler:
-    image: wifimemes/gova-backend
+    image: ${IMAGE_NAME:?}
     networks:
       - gova_network
-    command: event_handler run
+    command: uv run src/main.py event_handler run
 
   db_upgrade:
-    image: wifimemes/gova-backend
+    image: ${IMAGE_NAME:?}
     networks:
       - gova_network
-    command: db upgrade
+    command: uv run src/main.py db upgrade
 
 networks:
   gova_network:
