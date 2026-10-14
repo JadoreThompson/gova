@@ -16,6 +16,12 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Create .env.test
+        uses: JadoreThompson/create-env-file@main
+        with:
+          filename: .env.test
+          content: ${{ secrets.ENV_FILE }}
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
 
