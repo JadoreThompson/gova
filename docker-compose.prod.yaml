@@ -18,6 +18,25 @@ services:
         constraints:
           - node.role == manager
 
+  shepherd:
+    image: containrrr/shepherd:latest
+    environment:
+      TZ: "UTC"
+      SLEEP_TIME: "30s"
+      VERBOSE: "true"
+      WITH_REGISTRY_AUTH: "true"
+      REGISTRY_HOST: "ghcr.io"
+      REGISTRY_USER: "${IMAGE_REGISTRY_USERNAME}"
+      REGISTRY_PASSWORD: "${IMAGE_REGISTRY_PASSWORD}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+
   postgres:
     ports:
       - 5432:5432
