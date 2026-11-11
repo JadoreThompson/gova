@@ -1,22 +1,6 @@
 import os
-import sys
-from pathlib import Path
 
 import pytest
-from dotenv import load_dotenv
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = PROJECT_ROOT / "src"
-
-for path in (str(SRC_ROOT), str(PROJECT_ROOT)):
-    if path not in sys.path:
-        sys.path.insert(0, path)
-
-# Load .env before reading the flags so a GOVA_PERF_REAL_LLM entry there is
-# honoured and the real provider credentials are not shadowed by dummies.
-ENV_FILE = PROJECT_ROOT / ".env"
-if ENV_FILE.exists():
-    load_dotenv(ENV_FILE)
 
 from tests.perf.flags import PERF_ENV_VAR, perf_enabled, real_llm_enabled
 
