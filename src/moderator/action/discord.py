@@ -11,19 +11,27 @@ class DiscordActionType(str, Enum):
 
 
 class DiscordReplyAction(BaseModel):
-    type: Literal["reply"]
-    content: str = Field(..., description="The public reply to post under the target message.")
+    type: Literal[DiscordActionType.REPLY] = Field(DiscordActionType.REPLY, frozen=True)
+    content: str = Field(
+        ..., description="The public reply to post under the target message."
+    )
     reply_to: int = Field(..., description="The id of the target message to reply to.")
 
 
 class DiscordKickAction(BaseModel):
-    type: Literal["kick"]
-    user_id: int = Field(..., description="The id of the target message author to kick.")
+    type: Literal[DiscordActionType.KICK] = Field(DiscordActionType.KICK, frozen=True)
+    user_id: int = Field(
+        ..., description="The id of the target message author to kick."
+    )
 
 
 class DiscordTimeoutAction(BaseModel):
-    type: Literal["timeout"]
-    user_id: int = Field(..., description="The id of the target message author to timeout.")
+    type: Literal[DiscordActionType.TIMEOUT] = Field(
+        DiscordActionType.TIMEOUT, frozen=True
+    )
+    user_id: int = Field(
+        ..., description="The id of the target message author to timeout."
+    )
     duration: int = Field(
         ..., description="Timeout duration in seconds (60 to 604800)."
     )  # Duration in seconds

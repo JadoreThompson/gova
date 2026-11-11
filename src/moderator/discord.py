@@ -3,7 +3,10 @@ import uuid
 from datetime import timedelta
 
 import discord
+from aiokafka import AIOKafkaProducer
 
+from config import KAFKA_MODERATOR_ACTIONS_TOPIC
+from event.publisher import EventPublisher
 from lib.util import get_datetime
 from moderator.action.discord import (
     DiscordAction,
@@ -11,9 +14,11 @@ from moderator.action.discord import (
     DiscordTimeoutAction,
     DiscordActionType,
 )
+from moderator.action.setting import ActionSettings
 from moderator.agent import evaluate_message
 from moderator.conversation.discord import MinifiedDiscordMessage
 from moderator.conversation.manager import ConversationManager
+from moderator.event import ModeratorActionEvent
 
 
 class DiscordModerator:
@@ -22,8 +27,10 @@ class DiscordModerator:
         conversation_manager: ConversationManager,
         guild_id: int,
         policy: str,
+        event_publisher: EventPublisher,
         require_approval: bool = True,
         batch_window: int = 60,
+        action_configs: dict[DiscordActionType, ActionSettings] | None = None,
     ):
         """
         Args:
@@ -36,8 +43,10 @@ class DiscordModerator:
         self._guild_id = guild_id
         self._conversation_manager = conversation_manager
         self._policy = policy
+        self._event_publisher = event_publisher
         self._require_approval = require_approval
         self._batch_window = batch_window
+        self._action_configs = action_configs or {}
         self._logger = logging.getLogger(f"{self.__class__.__name__}::{self._id}")
 
     @property
@@ -70,14 +79,10 @@ class DiscordModerator:
             MinifiedDiscordMessage.from_discord_message(msg)
             for msg in await self._get_message_conversation(message)
         ]
-
         evaluation = await evaluate_message(
             MinifiedDiscordMessage.from_discord_message(message),
             messages,
             self._policy,
-        )
-        print(
-            f"Evaluation for message {message.id} by user {message.author.id}: {evaluation}"
         )
 
         if evaluation.action is not None:
@@ -137,9 +142,23 @@ class DiscordModerator:
 
         return sorted(buffer.values(), key=lambda msg: msg.created_at)
 
-    async def execute_action(self, action: DiscordAction, message: discord.Message):
+    async def execute_action(
+        self, action: DiscordAction, message: discord.Message
+    ) -> None:
         if self._require_approval:
             self._logger.info(f"Approval required for message {message.id}: {action}")
+            return
+
+        event = ModeratorActionEvent(action=action, message_id=message.id)
+        await self._event_publisher.publish(event, KAFKA_MODERATOR_ACTIONS_TOPIC)
+
+        if self._action_configs and (
+            action.type not in self._action_configs
+            or self._action_configs[action.type].requires_approval
+        ):
+            self._logger.warning(
+                f"Lack permission for action type {action.type} for message {message.id}"
+            )
             return
 
         if action.type == DiscordActionType.REPLY:
@@ -147,9 +166,8 @@ class DiscordModerator:
             await message.reply(_action.content)
         elif action.type == DiscordActionType.TIMEOUT:
             _action: DiscordTimeoutAction = action  # type: ignore
-            await message.author.timeout(
-                get_datetime() + timedelta(seconds=_action.duration)
-            )
+            timeout_until = get_datetime() + timedelta(seconds=_action.duration)
+            await message.author.timeout(timeout_until)
         elif action.type == DiscordActionType.KICK:
             await message.guild.kick(message.author)
         else:

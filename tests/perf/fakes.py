@@ -11,7 +11,7 @@ import asyncio
 import io
 from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import discord
 
@@ -161,6 +161,7 @@ def make_moderator(*, require_approval: bool = True) -> DiscordModerator:
         conversation_manager=ConversationManager(),
         guild_id=corpus.GUILD_ID,
         policy=POLICY,
+        event_publisher=AsyncMock(),
         require_approval=require_approval,
     )
 
