@@ -2,7 +2,7 @@ from fastapi import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from security.jwt.service import JWTService
-from user.model import User
+from user.schema import UserResponse
 from user.service import UserService
 from .exception import InvalidCredentialsException
 from .schema import LoginRequest
@@ -18,12 +18,12 @@ class AuthService:
         request: LoginRequest,
         db_sess: AsyncSession,
         rsp: Response | None = None,
-    ) -> User:
-        user = await self._user_service.find_by_email(request.email, db_sess)
+    ) -> UserResponse:
+        user = await self._user_service.authenticate(
+            request.email, request.password, db_sess
+        )
 
-        if user is None or not self._user_service.verify_password(
-            user, request.password
-        ):
+        if user is None:
             raise InvalidCredentialsException()
 
         await self._jwt_service.set_cookie(user, db_sess, rsp)
@@ -31,15 +31,12 @@ class AuthService:
 
     async def logout(
         self,
-        token: str | User,
+        token: str,
         db_sess: AsyncSession,
         rsp: Response | None = None,
-    ) -> User:
-        if isinstance(token, User):
-            user = token
-        else:
-            payload = await self._jwt_service.validate_jwt(token, db_sess)
-            user = await self._user_service.get(payload.sub, db_sess)
+    ) -> UserResponse:
+        payload = await self._jwt_service.validate_jwt(token, db_sess)
+        user = await self._user_service.get(payload.sub, db_sess)
 
         await self._jwt_service.clear_token(user, db_sess)
 

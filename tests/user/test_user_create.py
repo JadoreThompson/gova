@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from core.db.session import get_db_session
 from user.exception import UserAlreadyExistsException
 from user.model import User
+from user.schema import UserResponse
 
 from .util import make_create
 
@@ -15,19 +16,17 @@ async def test_create_adds_user_and_returns_it(user_service):
         user = await user_service.create(req, db_sess)
         await db_sess.commit()
 
-    assert isinstance(user, User)
+    assert isinstance(user, UserResponse)
     assert user.username == req.username
     assert user.email == req.email
-    assert user.password != req.password
-    assert user_service.verify_password(user, req.password)
-    assert not user_service.verify_password(user, "not-the-password")
 
     async with get_db_session() as db_sess:
         stored = await db_sess.get(User, user.id)
 
     assert stored is not None
-    assert stored.password == user.password
-    assert user_service.verify_password(stored, req.password)
+    assert stored.password != req.password
+    assert user_service.verify_password(stored.password, req.password)
+    assert not user_service.verify_password(stored.password, "not-the-password")
 
 
 @pytest.mark.asyncio(loop_scope="session")

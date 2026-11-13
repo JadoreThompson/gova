@@ -2,6 +2,7 @@ import pytest
 from fastapi import Response
 
 from core.db.session import get_db_session
+from user.model import User
 
 from .util import make_create, make_service
 
@@ -15,10 +16,11 @@ async def test_set_cookie_sets_token_and_cookie(user_service, jwt_service):
         await db_sess.commit()
 
     assert result is rsp
-    assert user.jwt_token is not None
     assert "set-cookie" in result.headers
     assert jwt_service.cookie_alias in result.headers["set-cookie"]
-    assert user.jwt_token in result.headers["set-cookie"]
+    async with get_db_session() as db_sess:
+        stored = await db_sess.get(User, user.id)
+    assert stored.jwt_token in result.headers["set-cookie"]
 
 
 @pytest.mark.asyncio(loop_scope="session")

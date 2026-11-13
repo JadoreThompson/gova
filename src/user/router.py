@@ -17,4 +17,4 @@ async def get_me(
     service: UserService = Depends(get_user_service),
 ):
     user = await service.get(jwt.sub, db_sess)
-    return UserResponse.from_model(user)
+    return user

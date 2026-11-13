@@ -10,7 +10,7 @@ from .exception import (
     CommunityNotFoundException,
 )
 from .model import Community
-from .schema import CommunityCreate, CommunityUpdate
+from .schema import CommunityCreate, CommunityResponse, CommunityUpdate
 
 
 class CommunityService:
@@ -19,7 +19,7 @@ class CommunityService:
 
     async def create(
         self, request: CommunityCreate, user_id: uuid.UUID, db_sess: AsyncSession
-    ) -> Community:
+    ) -> CommunityResponse:
         existing = await db_sess.scalar(
             select(Community).where(
                 Community.platform == request.platform,
@@ -38,11 +38,11 @@ class CommunityService:
         db_sess.add(community)
         await db_sess.flush()
         await db_sess.refresh(community)
-        return community
+        return CommunityResponse.from_model(community)
 
     async def get(
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
-    ) -> Community:
+    ) -> CommunityResponse:
         community = await db_sess.scalar(
             select(Community).where(
                 Community.id == id,
@@ -51,7 +51,15 @@ class CommunityService:
         )
         if community is None:
             raise CommunityNotFoundException()
-        return community
+        return CommunityResponse.from_model(community)
+
+    async def get_by_id(
+        self, id: uuid.UUID, db_sess: AsyncSession
+    ) -> CommunityResponse:
+        community = await db_sess.get(Community, id)
+        if community is None:
+            raise CommunityNotFoundException()
+        return CommunityResponse.from_model(community)
 
     async def list(
         self,
@@ -60,7 +68,7 @@ class CommunityService:
         *,
         page: int = 1,
         limit: int = 50,
-    ) -> tuple[list[Community], bool]:
+    ) -> tuple[list[CommunityResponse], bool]:
         result = await db_sess.execute(
             select(Community)
             .where(Community.user_id == user_id)
@@ -70,7 +78,10 @@ class CommunityService:
         )
         communities = list(result.scalars().all())
         has_next = len(communities) > limit
-        return communities[:limit], has_next
+        return [
+            CommunityResponse.from_model(community)
+            for community in communities[:limit]
+        ], has_next
 
     async def update(
         self,
@@ -78,20 +89,34 @@ class CommunityService:
         user_id: uuid.UUID,
         request: CommunityUpdate,
         db_sess: AsyncSession,
-    ) -> Community:
-        community = await self.get(id, user_id, db_sess)
+    ) -> CommunityResponse:
+        community = await db_sess.scalar(
+            select(Community).where(
+                Community.id == id,
+                Community.user_id == user_id,
+            )
+        )
+        if community is None:
+            raise CommunityNotFoundException()
 
         if request.policy is not None:
             community.policy = request.policy
 
         await db_sess.flush()
         await db_sess.refresh(community)
-        return community
+        return CommunityResponse.from_model(community)
 
     async def delete(
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> None:
-        community = await self.get(id, user_id, db_sess)
+        community = await db_sess.scalar(
+            select(Community).where(
+                Community.id == id,
+                Community.user_id == user_id,
+            )
+        )
+        if community is None:
+            raise CommunityNotFoundException()
 
         if await self._moderator_service.has_active_in_community(id, db_sess):
             raise CommunityHasActiveModeratorsException()

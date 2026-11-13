@@ -39,7 +39,8 @@ async def test_update_does_not_change_email_or_password(user_service):
         user = await user_service.create(req, db_sess)
         await db_sess.commit()
 
-    original_password = user.password
+    async with get_db_session() as db_sess:
+        original_password = (await db_sess.get(User, user.id)).password
     async with get_db_session() as db_sess:
         result = await user_service.update(
             user.id,
@@ -49,8 +50,11 @@ async def test_update_does_not_change_email_or_password(user_service):
         await db_sess.commit()
 
     assert result.email == req.email
-    assert result.password == original_password
-    assert user_service.verify_password(result, req.password)
+    assert not hasattr(result, "password")
+    async with get_db_session() as db_sess:
+        stored = await db_sess.get(User, user.id)
+    assert stored.password == original_password
+    assert user_service.verify_password(stored.password, req.password)
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -119,16 +123,20 @@ async def test_update_password_hashes_new_password(user_service):
     async with get_db_session() as db_sess:
         user = await user_service.create(req, db_sess)
         await db_sess.commit()
-    original_password = user.password
+    async with get_db_session() as db_sess:
+        original_password = (await db_sess.get(User, user.id)).password
 
     async with get_db_session() as db_sess:
         result = await user_service.update_password(user.id, "new-password", db_sess)
         await db_sess.commit()
 
-    assert result.password != original_password
-    assert result.password != "new-password"
-    assert user_service.verify_password(result, "new-password")
-    assert not user_service.verify_password(result, req.password)
+    assert not hasattr(result, "password")
+    async with get_db_session() as db_sess:
+        stored = await db_sess.get(User, user.id)
+    assert stored.password != original_password
+    assert stored.password != "new-password"
+    assert user_service.verify_password(stored.password, "new-password")
+    assert not user_service.verify_password(stored.password, req.password)
 
 
 @pytest.mark.asyncio(loop_scope="session")
