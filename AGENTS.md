@@ -13,6 +13,8 @@ AI-powered Discord community moderator with a FastAPI backend in progress. Pytho
 - Integration tests start real Postgres/Kafka/Redis via `testcontainers` — Docker must be running. Containers bind the ports from `.env`, so don't run the suite alongside `docker-compose.yaml`.
 - DB tests use `@pytest.mark.asyncio(loop_scope="session")`; keep that scope or the shared engine/session breaks. Copy the pattern from `tests/community/test_community_create.py`.
 - Tests target services against the real DB (fixtures in `conftest.py`), not HTTP routers.
+- Keep unit tests for manager behavior in one `test_<class>_<method>.py` file per method; use shared helpers for constructing the manager and mock external boundaries such as Kafka and database sessions.
+- Within each method's test file, cover the main successful behavior and meaningful early-return/error branches. Test private helpers through the public method that uses them unless they have meaningful independent behavior.
 
 ## Layout
 
