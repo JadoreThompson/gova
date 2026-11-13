@@ -90,7 +90,7 @@ class ModeratorManager:
 
             started_event = ModeratorStartedEvent(moderator_id=moderator.id)
             await self._event_publisher.publish(
-                started_event, KAFKA_MODERATOR_EVENTS_TOPIC
+                started_event, KAFKA_MODERATOR_EVENTS_TOPIC, db_sess
             )
 
             await db_sess.commit()
@@ -135,7 +135,7 @@ class ModeratorManager:
 
             stopped_event = ModeratorStoppedEvent(moderator_id=moderator.id)
             await self._event_publisher.publish(
-                stopped_event, KAFKA_MODERATOR_EVENTS_TOPIC
+                stopped_event, KAFKA_MODERATOR_EVENTS_TOPIC, db_sess
             )
 
             await db_sess.commit()
@@ -151,4 +151,7 @@ class ModeratorManager:
             return
 
         ping_event = ModeratorPingEvent(moderator_id=moderator_id)
-        await self._event_publisher.publish(ping_event, KAFKA_MODERATOR_EVENTS_TOPIC)
+        async with get_db_session() as db_sess:
+            await self._event_publisher.publish(
+                ping_event, KAFKA_MODERATOR_EVENTS_TOPIC, db_sess
+            )
