@@ -3,7 +3,6 @@ import uuid
 from datetime import timedelta
 
 import discord
-from aiokafka import AIOKafkaProducer
 
 from config import KAFKA_MODERATOR_ACTIONS_TOPIC
 from event.publisher import EventPublisher
@@ -16,14 +15,16 @@ from moderator.action.discord import (
 )
 from moderator.action.setting import ActionSettings
 from moderator.agent import evaluate_message
+from moderator.base import Moderator
 from moderator.conversation.discord import MinifiedDiscordMessage
 from moderator.conversation.manager import ConversationManager
 from moderator.event import ModeratorActionEvent
 
 
-class DiscordModerator:
+class DiscordModerator(Moderator):
     def __init__(
         self,
+        id: uuid.UUID,
         conversation_manager: ConversationManager,
         guild_id: int,
         policy: str,
@@ -39,7 +40,7 @@ class DiscordModerator:
             policy (str): _description_
             batch_window (int, optional): In seconds, the time window for batching messages. Defaults to 60.
         """
-        self._id = uuid.uuid4()
+        self._id = id
         self._guild_id = guild_id
         self._conversation_manager = conversation_manager
         self._policy = policy
@@ -139,7 +140,9 @@ class DiscordModerator:
     async def execute_action(
         self, action: DiscordAction, message: discord.Message
     ) -> None:
-        event = ModeratorActionEvent(action=action, message_id=message.id)
+        event = ModeratorActionEvent(
+            moderator_id=self._id, action=action, message_id=message.id
+        )
         await self._event_publisher.publish(event, KAFKA_MODERATOR_ACTIONS_TOPIC)
 
         if self._action_configs and (
