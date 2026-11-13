@@ -5,6 +5,7 @@ from datetime import timedelta
 import discord
 
 from config import KAFKA_MODERATOR_ACTIONS_TOPIC
+from core.db.session import get_db_session
 from event.publisher import EventPublisher
 from lib.util import get_datetime
 from moderator.action.discord import (
@@ -143,7 +144,10 @@ class DiscordModerator(Moderator):
         event = ModeratorActionEvent(
             moderator_id=self._id, action=action, message_id=message.id
         )
-        await self._event_publisher.publish(event, KAFKA_MODERATOR_ACTIONS_TOPIC)
+        async with get_db_session() as db_sess:
+            await self._event_publisher.publish(
+                event, KAFKA_MODERATOR_ACTIONS_TOPIC, db_sess
+            )
 
         if self._action_configs and (
             action.type not in self._action_configs

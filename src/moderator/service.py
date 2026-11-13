@@ -50,7 +50,9 @@ class ModeratorService:
         db_sess: AsyncSession,
     ) -> None:
         await self.get(id, user_id, db_sess)
-        await self._event_publisher.publish(event, KAFKA_MODERATOR_EVENTS_TOPIC)
+        await self._event_publisher.publish(
+            event, KAFKA_MODERATOR_EVENTS_TOPIC, db_sess
+        )
 
     async def create(
         self,
