@@ -63,12 +63,6 @@ class DiscordModerator:
     def get_policy(self) -> str:
         return self._policy
 
-    def set_require_approval(self, require_approval: bool):
-        self._require_approval = require_approval
-
-    def get_require_approval(self) -> bool:
-        return self._require_approval
-
     async def on_message(self, message: discord.Message):
         if message.guild.id != self._guild_id:
             raise ValueError(
@@ -145,10 +139,6 @@ class DiscordModerator:
     async def execute_action(
         self, action: DiscordAction, message: discord.Message
     ) -> None:
-        if self._require_approval:
-            self._logger.info(f"Approval required for message {message.id}: {action}")
-            return
-
         event = ModeratorActionEvent(action=action, message_id=message.id)
         await self._event_publisher.publish(event, KAFKA_MODERATOR_ACTIONS_TOPIC)
 
