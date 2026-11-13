@@ -36,10 +36,11 @@ async def test_stop_moderator_unregisters_and_publishes_stopped_event(monkeypatc
     assert not registry.contains(moderator_id)
     db_sess.execute.assert_awaited_once()
     db_sess.commit.assert_awaited_once()
-    published_event, topic = publisher.publish.await_args.args
+    published_event, topic, published_db_sess = publisher.publish.await_args.args
     assert isinstance(published_event, ModeratorStoppedEvent)
     assert published_event.moderator_id == moderator_id
     assert topic == KAFKA_MODERATOR_EVENTS_TOPIC
+    assert published_db_sess is db_sess
 
 
 @pytest.mark.asyncio(loop_scope="session")

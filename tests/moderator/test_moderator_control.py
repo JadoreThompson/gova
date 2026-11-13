@@ -44,10 +44,11 @@ async def test_moderator_control_publishes_owned_moderator_event(
 
     await getattr(service, method_name)(moderator_id, user_id, db_sess)
 
-    published_event, topic = publisher.publish.await_args.args
+    published_event, topic, published_db_sess = publisher.publish.await_args.args
     assert isinstance(published_event, event_type)
     assert published_event.moderator_id == moderator_id
     assert topic == KAFKA_MODERATOR_EVENTS_TOPIC
+    assert published_db_sess is db_sess
 
 
 @pytest.mark.asyncio(loop_scope="session")
