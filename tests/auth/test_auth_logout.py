@@ -62,13 +62,13 @@ async def test_logout_deletes_cookie(user_service, auth_service):
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_logout_accepts_user_instance(user_service, auth_service):
+async def test_logout_clears_token_when_given_valid_token(user_service, auth_service):
     async with get_db_session() as db_sess:
         user = await _login(user_service, auth_service, db_sess)
 
     async with get_db_session() as db_sess:
         loaded = await db_sess.get(User, user.id)
-        await auth_service.logout(loaded, db_sess)
+        await auth_service.logout(loaded.jwt_token, db_sess)
         await db_sess.commit()
 
     async with get_db_session() as db_sess:
@@ -88,10 +88,14 @@ async def test_logout_rejects_invalid_token(auth_service):
 async def test_logout_rejects_stale_token(user_service, auth_service):
     async with get_db_session() as db_sess:
         user = await _login(user_service, auth_service, db_sess)
-        old_token = user.jwt_token
+        user_id = user.id
 
     async with get_db_session() as db_sess:
-        loaded = await db_sess.get(User, user.id)
+        stored = await db_sess.get(User, user_id)
+        old_token = stored.jwt_token
+
+    async with get_db_session() as db_sess:
+        loaded = await db_sess.get(User, user_id)
         await auth_service.login(
             LoginRequest(email=loaded.email, password="password-1"),
             db_sess,

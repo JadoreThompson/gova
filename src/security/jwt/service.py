@@ -15,6 +15,7 @@ from config import (
 )
 from lib.util import get_datetime
 from user.model import User
+from user.schema import UserResponse
 from .exception import JWTException
 from .schema import JWTPayload
 
@@ -72,18 +73,24 @@ class JWTService:
         except jwt.InvalidTokenError:
             raise JWTException("Invalid token")
 
-    async def set_token(self, user: User, db_sess: AsyncSession) -> str:
+    async def set_token(self, user: UserResponse, db_sess: AsyncSession) -> str:
+        db_user = await db_sess.get(User, user.id)
+        if db_user is None:
+            raise JWTException("User not found.")
         token = self.generate_jwt(sub=user.id, em=user.email)
-        user.jwt_token = token
+        db_user.jwt_token = token
         await db_sess.flush()
         return token
 
-    async def clear_token(self, user: User, db_sess: AsyncSession) -> None:
-        user.jwt_token = None
+    async def clear_token(self, user: UserResponse, db_sess: AsyncSession) -> None:
+        db_user = await db_sess.get(User, user.id)
+        if db_user is None:
+            raise JWTException("User not found.")
+        db_user.jwt_token = None
         await db_sess.flush()
 
     async def set_cookie(
-        self, user: User, db_sess: AsyncSession, rsp: Response | None = None
+        self, user: UserResponse, db_sess: AsyncSession, rsp: Response | None = None
     ) -> Response:
         token = await self.set_token(user, db_sess)
 

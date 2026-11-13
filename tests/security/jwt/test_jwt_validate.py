@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 
 from core.db.session import get_db_session
+from user.model import User
 from lib.util import get_datetime
 from security.jwt.exception import JWTException
 
@@ -45,8 +46,7 @@ async def test_validate_jwt_rejects_token_after_logout(user_service, jwt_service
         await db_sess.commit()
 
     async with get_db_session() as db_sess:
-        loaded = await db_sess.get(type(user), user.id)
-        await jwt_service.clear_token(loaded, db_sess)
+        await jwt_service.clear_token(user, db_sess)
         await db_sess.commit()
 
     with pytest.raises(JWTException):
@@ -72,7 +72,8 @@ async def test_validate_jwt_rejects_expired_token(user_service, jwt_service):
         token = jwt_service.generate_jwt(
             sub=user.id, em=user.email, exp=expiry
         )
-        user.jwt_token = token
+        db_user = await db_sess.get(User, user.id)
+        db_user.jwt_token = token
         await db_sess.commit()
 
     with pytest.raises(JWTException):

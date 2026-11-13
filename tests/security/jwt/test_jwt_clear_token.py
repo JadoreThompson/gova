@@ -1,6 +1,7 @@
 import pytest
 
 from core.db.session import get_db_session
+from user.model import User
 
 from .util import make_create
 
@@ -13,10 +14,8 @@ async def test_clear_token_removes_token_from_user(user_service, jwt_service):
         await jwt_service.clear_token(user, db_sess)
         await db_sess.commit()
 
-    assert user.jwt_token is None
-
     async with get_db_session() as db_sess:
-        stored = await db_sess.get(type(user), user.id)
+        stored = await db_sess.get(User, user.id)
 
     assert stored.jwt_token is None
 
@@ -29,4 +28,6 @@ async def test_clear_token_is_idempotent(user_service, jwt_service):
         await jwt_service.clear_token(user, db_sess)
         await db_sess.commit()
 
-    assert user.jwt_token is None
+    async with get_db_session() as db_sess:
+        stored = await db_sess.get(User, user.id)
+    assert stored.jwt_token is None
