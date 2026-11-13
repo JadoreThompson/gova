@@ -2,7 +2,6 @@ import os
 import uuid
 from typing import Callable
 
-from event.kafka import AIOKafkaProducerFactory
 from event.publisher import AIOKafkaEventPublisher
 
 os.environ.setdefault("JWT_COOKIE_ALIAS", "test-cookie")
@@ -111,7 +110,7 @@ def setup(postgres_container):
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def kafka_event_publisher():
-    return AIOKafkaEventPublisher(AIOKafkaProducerFactory.create())
+    return AIOKafkaEventPublisher()
 
 
 @pytest.fixture

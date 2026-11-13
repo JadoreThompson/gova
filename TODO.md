@@ -1,4 +1,4 @@
 - [ ] JWT service set token needs to adher to module boundaries
 - [ ] Potentially set up CDC for moderator status event emission
-- [ ] Event publisher needs to use outbox
+- [x] Event publisher needs to use outbox
 - [ ] Moderator manager monitoring
