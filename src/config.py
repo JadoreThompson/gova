@@ -27,6 +27,12 @@ KAFKA_BOOTSTRAP_SERVERS = os.environ["KAFKA_BOOTSTRAP_SERVERS"]
 KAFKA_MODERATOR_ACTIONS_TOPIC = os.environ.get(
     "KAFKA_MODERATOR_ACTIONS_TOPIC", "moderator_actions"
 )
+KAFKA_MODERATOR_EVENTS_TOPIC = os.environ.get(
+    "KAFKA_MODERATOR_EVENTS_TOPIC", "moderator_events"
+)
+KAFKA_MODERATOR_EVENTS_GROUP_ID = os.environ.get(
+    "KAFKA_MODERATOR_EVENTS_GROUP_ID", "moderator-manager"
+)
 
 
 # Postgres
