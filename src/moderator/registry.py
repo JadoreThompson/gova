@@ -3,7 +3,7 @@ import uuid
 from moderator.base import Moderator
 
 
-class ModeratorManager:
+class ModeratorRegistry:
     def __init__(self):
         self._moderators: dict[uuid.UUID, Moderator] = {}
 
