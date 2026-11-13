@@ -5,6 +5,8 @@ from fastapi import Depends
 from auth.service import AuthService
 from community.service import CommunityService
 from config import JWT_COOKIE_ALIAS
+from event.kafka import AIOKafkaProducerFactory
+from event.publisher import AIOKafkaEventPublisher, EventPublisher
 from moderator.service import ModeratorService
 from security.jwt.exception import JWTException
 from security.jwt.schema import JWTPayload
@@ -16,8 +18,14 @@ def get_user_service() -> UserService:
     return UserService(PasswordHasher())
 
 
-def get_moderator_service() -> ModeratorService:
-    return ModeratorService()
+def get_event_publisher() -> EventPublisher:
+    return AIOKafkaEventPublisher(AIOKafkaProducerFactory.create())
+
+
+def get_moderator_service(
+    event_publisher: EventPublisher = Depends(get_event_publisher),
+) -> ModeratorService:
+    return ModeratorService(event_publisher)
 
 
 def get_community_service(
