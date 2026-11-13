@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import uuid
 from contextlib import contextmanager, redirect_stdout
 from dataclasses import dataclass
 from unittest.mock import AsyncMock, patch
@@ -158,6 +159,7 @@ def build_day(day_index: int) -> FakeDay:
 
 def make_moderator(*, require_approval: bool = True) -> DiscordModerator:
     return DiscordModerator(
+        id=uuid.uuid4(),
         conversation_manager=ConversationManager(),
         guild_id=corpus.GUILD_ID,
         policy=POLICY,
