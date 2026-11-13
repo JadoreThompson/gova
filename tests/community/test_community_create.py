@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from community.enums import CommunityPlatform
 from community.exception import CommunityAlreadyExistsException
 from community.model import Community
+from community.schema import CommunityResponse
 from core.db.session import get_db_session
 from .util import make_create
 
@@ -18,7 +19,7 @@ async def test_create_adds_community_and_returns_it(community_service, create_us
         community = await community_service.create(req, community_user_id, db_sess)
         await db_sess.commit()
 
-    assert isinstance(community, Community)
+    assert isinstance(community, CommunityResponse)
     assert community.platform == CommunityPlatform.DISCORD
     assert community.community_id == req.community_id
     assert community.policy == "Be nice."

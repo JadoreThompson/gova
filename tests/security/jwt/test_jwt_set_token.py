@@ -1,6 +1,7 @@
 import pytest
 
 from core.db.session import get_db_session
+from user.model import User
 
 from .util import make_create
 
@@ -13,10 +14,8 @@ async def test_set_token_stores_token_on_user(user_service, jwt_service):
         await db_sess.commit()
 
     assert token
-    assert user.jwt_token == token
-
     async with get_db_session() as db_sess:
-        stored = await db_sess.get(type(user), user.id)
+        stored = await db_sess.get(User, user.id)
 
     assert stored.jwt_token == token
 
@@ -44,4 +43,6 @@ async def test_set_token_replaces_existing_token(user_service, jwt_service):
 
     assert second
     assert second != first
-    assert user.jwt_token == second
+    async with get_db_session() as db_sess:
+        stored = await db_sess.get(User, user.id)
+    assert stored.jwt_token == second

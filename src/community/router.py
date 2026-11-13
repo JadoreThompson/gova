@@ -20,7 +20,7 @@ async def create_community(
     service: CommunityService = Depends(get_community_service),
 ):
     community = await service.create(body, jwt.sub, db_sess)
-    return CommunityResponse.from_model(community)
+    return community
 
 
 @router.get("/{id}", response_model=CommunityResponse)
@@ -31,7 +31,7 @@ async def get_community(
     service: CommunityService = Depends(get_community_service),
 ):
     community = await service.get(id, jwt.sub, db_sess)
-    return CommunityResponse.from_model(community)
+    return community
 
 
 @router.get("/", response_model=list[CommunityResponse])
@@ -43,7 +43,7 @@ async def list_communities(
     service: CommunityService = Depends(get_community_service),
 ):
     communities, _ = await service.list(jwt.sub, db_sess, page=page, limit=limit)
-    return [CommunityResponse.from_model(c) for c in communities]
+    return communities
 
 
 @router.patch("/{id}", response_model=CommunityResponse)
@@ -55,7 +55,7 @@ async def update_community(
     service: CommunityService = Depends(get_community_service),
 ):
     community = await service.update(id, jwt.sub, body, db_sess)
-    return CommunityResponse.from_model(community)
+    return community
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
