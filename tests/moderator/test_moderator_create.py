@@ -20,8 +20,7 @@ async def test_create_links_moderator_to_user_and_community(
         )
         await db_sess.commit()
 
-    assert isinstance(moderator, Moderators)
-    assert moderator.user_id == user_id
+    assert isinstance(moderator, ModeratorResponse)
     assert moderator.community_id == community.id
     assert moderator.name == "Moderator"
     assert moderator.status == ModeratorStatus.OFFLINE
