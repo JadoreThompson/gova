@@ -1,6 +1,9 @@
 import os
-from typing import Callable
 import uuid
+from typing import Callable
+
+from event.kafka import AIOKafkaProducerFactory
+from event.publisher import AIOKafkaEventPublisher
 
 os.environ.setdefault("JWT_COOKIE_ALIAS", "test-cookie")
 os.environ.setdefault("JWT_ALGO", "HS256")
@@ -26,7 +29,7 @@ from config import (
 )
 from core.db.client import POSTGRES_ENGINE_SYNC
 from core.db.model import Base
-from core.db.session import get_db_session, get_db_session_sync
+from core.db.session import get_db_session_sync
 from security.jwt.service import JWTService
 from moderator.service import ModeratorService
 from tests.perf.flags import PERF_ENV_VAR, perf_enabled, real_llm_enabled
@@ -106,9 +109,14 @@ def setup(postgres_container):
 # ===================
 
 
+@pytest_asyncio.fixture(loop_scope="session")
+async def kafka_event_publisher():
+    return AIOKafkaEventPublisher(AIOKafkaProducerFactory.create())
+
+
 @pytest.fixture
-def moderator_service():
-    return ModeratorService()
+def moderator_service(kafka_event_publisher):
+    return ModeratorService(kafka_event_publisher)
 
 
 @pytest.fixture

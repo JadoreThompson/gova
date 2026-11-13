@@ -10,6 +10,9 @@ class ModeratorRegistry:
     def add_moderator(self, moderator: Moderator) -> None:
         self._moderators[moderator.id] = moderator
 
+    def contains(self, moderator_id: uuid.UUID) -> bool:
+        return moderator_id in self._moderators
+
     def get_moderator(self, moderator_id: uuid.UUID) -> Moderator:
         if moderator_id in self._moderators:
             return self._moderators[moderator_id]
@@ -18,3 +21,9 @@ class ModeratorRegistry:
     def remove_moderator(self, moderator_id: uuid.UUID) -> None:
         self.get_moderator(moderator_id)
         del self._moderators[moderator_id]
+
+    def list_moderators(self) -> list[Moderator]:
+        return list(self._moderators.values())
+
+    def __contains__(self, moderator_id: uuid.UUID) -> bool:
+        return moderator_id in self._moderators
