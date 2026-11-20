@@ -1,2 +1,0 @@
-class ConversationDoesNotExistException(Exception):
-    pass

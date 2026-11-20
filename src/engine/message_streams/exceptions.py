@@ -1,2 +1,0 @@
-class IterationInProgressException(Exception):
-    pass

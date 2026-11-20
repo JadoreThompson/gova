@@ -1,2 +1,0 @@
-class DiscordServiceException(Exception):
-    pass
