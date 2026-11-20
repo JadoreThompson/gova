@@ -1,6 +1,7 @@
+from typing import Type, TypeVar, cast
+
 from argon2 import PasswordHasher
-from fastapi import Request
-from fastapi import Depends
+from fastapi import Depends, Request
 
 from auth.service import AuthService
 from community.service import CommunityService
@@ -12,36 +13,47 @@ from security.jwt.schema import JWTPayload
 from security.jwt.service import JWTService
 from user.service import UserService
 
+V = TypeVar("V")
+
+_REGISTRY: dict[Type, object] = {}
+
+
+def _get_or_create_object(cls: Type[V], *args, **kwargs) -> V:
+    if cls not in _REGISTRY:
+        _REGISTRY[cls] = cls(*args, **kwargs)
+
+    return cast(V, _REGISTRY[cls])
+
 
 def get_user_service() -> UserService:
-    return UserService(PasswordHasher())
+    return _get_or_create_object(UserService, _get_or_create_object(PasswordHasher))
 
 
 def get_event_publisher() -> EventPublisher:
-    return AIOKafkaEventPublisher()
+    return _get_or_create_object(AIOKafkaEventPublisher)
 
 
 def get_moderator_service(
     event_publisher: EventPublisher = Depends(get_event_publisher),
 ) -> ModeratorService:
-    return ModeratorService(event_publisher)
+    return _get_or_create_object(ModeratorService, event_publisher)
 
 
 def get_community_service(
     moderator_service: ModeratorService = Depends(get_moderator_service),
 ) -> CommunityService:
-    return CommunityService(moderator_service)
+    return _get_or_create_object(CommunityService, moderator_service)
 
 
 def get_jwt_service() -> JWTService:
-    return JWTService()
+    return _get_or_create_object(JWTService)
 
 
 def get_auth_service(
     user_service: UserService = Depends(get_user_service),
     jwt_service: JWTService = Depends(get_jwt_service),
 ) -> AuthService:
-    return AuthService(user_service, jwt_service)
+    return _get_or_create_object(AuthService, user_service, jwt_service)
 
 
 async def depends_jwt(req: Request) -> JWTPayload:
