@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import discord
 
+from community.enums import CommunityPlatform
 from config import KAFKA_MODERATOR_ACTIONS_TOPIC
 from core.db.session import get_db_session
 from event.publisher import EventPublisher
@@ -16,13 +17,13 @@ from moderator.action.discord import (
 )
 from moderator.action.setting import ActionSettings
 from moderator.agent import evaluate_message
-from moderator.base import Moderator
+from moderator.base import BaseModeratorService
 from moderator.conversation.discord import MinifiedDiscordMessage
 from moderator.conversation.manager import ConversationManager
 from moderator.event import ModeratorActionEvent
 
 
-class DiscordModerator(Moderator):
+class DiscordModeratorService(BaseModeratorService):
     def __init__(
         self,
         id: uuid.UUID,
@@ -30,7 +31,6 @@ class DiscordModerator(Moderator):
         guild_id: int,
         policy: str,
         event_publisher: EventPublisher,
-        require_approval: bool = True,
         batch_window: int = 60,
         action_configs: dict[DiscordActionType, ActionSettings] | None = None,
     ):
@@ -46,7 +46,6 @@ class DiscordModerator(Moderator):
         self._conversation_manager = conversation_manager
         self._policy = policy
         self._event_publisher = event_publisher
-        self._require_approval = require_approval
         self._batch_window = batch_window
         self._action_configs = action_configs or {}
         self._logger = logging.getLogger(f"{self.__class__.__name__}::{self._id}")
@@ -56,8 +55,12 @@ class DiscordModerator(Moderator):
         return self._id
 
     @property
-    def guild_id(self) -> int:
-        return self._guild_id
+    def community_id(self) -> str:
+        return str(self._guild_id)
+
+    @property
+    def platform(self):
+        return CommunityPlatform.DISCORD
 
     def set_policy(self, policy: str):
         self._policy = policy
@@ -65,7 +68,7 @@ class DiscordModerator(Moderator):
     def get_policy(self) -> str:
         return self._policy
 
-    async def on_message(self, message: discord.Message):
+    async def process_message(self, message: discord.Message):
         if message.guild.id != self._guild_id:
             raise ValueError(
                 f"Message {message.id} from guild {message.guild.id} is not from the configured guild {self._guild_id}"

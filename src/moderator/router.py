@@ -12,11 +12,11 @@ from config import (
     KAFKA_MODERATOR_ACTIONS_TOPIC,
     KAFKA_MODERATOR_EVENTS_TOPIC,
 )
-from core.db.session import get_db_session
+from core.db.session import get_db_session_dep
 from event.kafka import AIOKafkaConsumerFactory
 from moderator.exception import ModeratorNotFoundException
 from moderator.schema import ModeratorCreate, ModeratorResponse, ModeratorUpdate
-from moderator.service import ModeratorService
+from moderator.service.moderator import ModeratorService
 from security.jwt.exception import JWTException
 from security.jwt.schema import JWTPayload
 from security.jwt.service import JWTService
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/api/v1/moderators", tags=["Moderators"])
 async def create_moderator(
     body: ModeratorCreate,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderator = await service.create(body, jwt.sub, db_sess)
@@ -41,7 +41,7 @@ async def create_moderator(
 async def get_moderator(
     id: uuid.UUID,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderator = await service.get(id, jwt.sub, db_sess)
@@ -54,7 +54,7 @@ async def list_moderators(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderators, _ = await service.list(
@@ -68,7 +68,7 @@ async def update_moderator(
     id: uuid.UUID,
     body: ModeratorUpdate,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderator = await service.update(id, jwt.sub, body, db_sess)
@@ -79,7 +79,7 @@ async def update_moderator(
 async def delete_moderator(
     id: uuid.UUID,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     await service.delete(id, jwt.sub, db_sess)
@@ -89,7 +89,7 @@ async def delete_moderator(
 async def start_moderator(
     id: uuid.UUID,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     await service.start(id, jwt.sub, db_sess)
@@ -99,7 +99,7 @@ async def start_moderator(
 async def stop_moderator(
     id: uuid.UUID,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     await service.stop(id, jwt.sub, db_sess)
@@ -109,7 +109,7 @@ async def stop_moderator(
 async def ping_moderator(
     id: uuid.UUID,
     jwt: JWTPayload = Depends(depends_jwt),
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     service: ModeratorService = Depends(get_moderator_service),
 ):
     await service.ping(id, jwt.sub, db_sess)
@@ -119,7 +119,7 @@ async def ping_moderator(
 async def moderator_events(
     websocket: WebSocket,
     id: uuid.UUID,
-    db_sess: AsyncSession = Depends(get_db_session),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
     moderator_service: ModeratorService = Depends(get_moderator_service),
     jwt_service: JWTService = Depends(get_jwt_service),
 ):

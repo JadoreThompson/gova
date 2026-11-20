@@ -60,7 +60,7 @@ def _offered_messages(rate: float):
 
 
 async def _run(rate: float):
-    moderator = make_moderator(require_approval=True)
+    moderator = make_moderator()
     semaphore = asyncio.Semaphore(CONCURRENCY)
     offered = _offered_messages(rate)
     completed = 0
@@ -68,7 +68,7 @@ async def _run(rate: float):
     async def handle(message):
         nonlocal completed
         async with semaphore:
-            await moderator.on_message(message)
+            await moderator.process_message(message)
             completed += 1
 
     with evaluator_harness(latency_ms=MODEL_LATENCY_MS), suppress_pipeline_output():

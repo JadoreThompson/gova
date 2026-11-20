@@ -13,7 +13,7 @@ from moderator.event import (
     ModeratorStopEvent,
 )
 from moderator.exception import ModeratorNotFoundException
-from moderator.service import ModeratorService
+from moderator.service.moderator import ModeratorService
 
 
 @pytest.mark.asyncio(loop_scope="session")

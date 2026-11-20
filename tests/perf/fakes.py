@@ -18,7 +18,7 @@ import discord
 
 from moderator.agent import EvaluationAgentOutput
 from moderator.conversation.manager import ConversationManager
-from moderator.discord import DiscordModerator
+from moderator.service.discord import DiscordModeratorService
 
 from . import corpus
 from .flags import real_llm_enabled
@@ -157,14 +157,13 @@ def build_day(day_index: int) -> FakeDay:
     return FakeDay(guild=guild, channel=channel, messages=messages)
 
 
-def make_moderator(*, require_approval: bool = True) -> DiscordModerator:
-    return DiscordModerator(
+def make_moderator() -> DiscordModeratorService:
+    return DiscordModeratorService(
         id=uuid.uuid4(),
         conversation_manager=ConversationManager(),
         guild_id=corpus.GUILD_ID,
         policy=POLICY,
         event_publisher=AsyncMock(),
-        require_approval=require_approval,
     )
 
 
@@ -200,5 +199,5 @@ def evaluator_harness(*, latency_ms: float = 0.0):
             await asyncio.sleep(latency_ms / 1000.0)
         return BENIGN_EVALUATION
 
-    with patch("moderator.discord.evaluate_message", new=_evaluate):
+    with patch("moderator.service.discord.evaluate_message", new=_evaluate):
         yield
