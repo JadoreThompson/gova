@@ -31,6 +31,8 @@ from core.db.model import Base
 from core.db.session import get_db_session_sync
 from security.jwt.service import JWTService
 from moderator.service.moderator import ModeratorService
+from moderator.service.assignment import ModeratorWorkerAssignmentService
+from moderator.service.worker import ModeratorWorkerService
 from tests.perf.flags import PERF_ENV_VAR, perf_enabled, real_llm_enabled
 from user.service import UserService
 
@@ -121,6 +123,18 @@ def moderator_service(kafka_event_publisher):
 @pytest.fixture
 def community_service(moderator_service):
     return CommunityService(moderator_service=moderator_service)
+
+
+@pytest.fixture
+def moderator_worker_service():
+    return ModeratorWorkerService()
+
+
+@pytest.fixture
+def moderator_worker_assignment_service(moderator_worker_service, moderator_service):
+    return ModeratorWorkerAssignmentService(
+        moderator_worker_service, moderator_service
+    )
 
 
 @pytest.fixture
