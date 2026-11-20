@@ -1,25 +1,25 @@
+import logging
 import os
+import sys
 from dotenv import load_dotenv
 from pathlib import Path
 
 # Paths
-# SRC_FOLDER = os.path.dirname(__file__)
 SRC_FOLDER = Path(__file__).resolve().parent
-# PROJECT_FOLDER = os.path.dirname(SRC_FOLDER)
 PROJECT_FOLDER = SRC_FOLDER.parent
 
-# load_dotenv(os.path.join(PROJECT_FOLDER, ".env"))
 load_dotenv(PROJECT_FOLDER / ".env")
 
 
-# Discord
-DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
+# Postgres
+POSTGRES_HOST = os.environ["POSTGRES_HOST"]
+POSTGRES_PORT = int(os.environ["POSTGRES_PORT"])
+POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
+POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
+POSTGRES_DB = os.environ["POSTGRES_DB"]
 
-
-# LLM
-LLM_API_KEY = os.environ["LLM_API_KEY"]
-LLM_MODEL_NAME = os.environ["LLM_MODEL_NAME"]
-LLM_BASE_URL = os.environ["LLM_BASE_URL"]
+POSTGRES_HOST_CREDS = f"{POSTGRES_HOST}:{POSTGRES_PORT}"
+POSTGRES_USER_CREDS = f"{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}"
 
 
 # Kafka
@@ -35,17 +35,6 @@ KAFKA_MODERATOR_EVENTS_GROUP_ID = os.environ.get(
 )
 
 
-# Postgres
-POSTGRES_HOST = os.environ["POSTGRES_HOST"]
-POSTGRES_PORT = int(os.environ["POSTGRES_PORT"])
-POSTGRES_USERNAME = os.environ["POSTGRES_USERNAME"]
-POSTGRES_PASSWORD = os.environ["POSTGRES_PASSWORD"]
-POSTGRES_DB = os.environ["POSTGRES_DB"]
-
-POSTGRES_HOST_CREDS = f"{POSTGRES_HOST}:{POSTGRES_PORT}"
-POSTGRES_USER_CREDS = f"{POSTGRES_USERNAME}:{POSTGRES_PASSWORD}"
-
-
 # Redis
 REDIS_HOST = os.environ["REDIS_HOST"]
 REDIS_PORT = int(os.environ["REDIS_PORT"])
@@ -54,11 +43,46 @@ REDIS_PASSWORD = os.environ["REDIS_PASSWORD"]
 REDIS_DB = int(os.environ["REDIS_DB"])
 
 
-# JWT
+# LLM
+LLM_BASE_URL = os.environ["LLM_BASE_URL"]
+LLM_API_KEY = os.environ["LLM_API_KEY"]
+LLM_MODEL_NAME = os.environ["LLM_MODEL_NAME"]
+
+
+# Discord
+DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
+
+
+# HTTP API
+APP_ALLOWED_ORIGINS = os.environ["APP_ALLOWED_ORIGINS"].split(",")
+APP_ALLOWED_HEADERS = os.environ["APP_ALLOWED_HEADERS"].split(",")
+APP_ALLOWED_METHODS = os.environ["APP_ALLOWED_METHODS"].split(",")
+APP_ALLOW_CREDENTIALS = os.environ["APP_ALLOW_CREDENTIALS"] == "1"
+
+
+# JWT Configuration
 JWT_COOKIE_ALIAS = os.environ["JWT_COOKIE_ALIAS"]
 JWT_ALGO = os.environ["JWT_ALGO"]
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_EXPIRY_SECS = int(os.environ["JWT_EXPIRY_SECS"])
 
 
+# Logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler(sys.stdout)
+logger.addHandler(handler)
+
+aiokafka_logger = logging.getLogger("aiokafka")
+aiokafka_logger.setLevel(logging.WARNING)
+
+kafka_logger = logging.getLogger("kafka")
+kafka_logger.setLevel(logging.WARNING)
+
+del logger
+del handler
+
+
+# Environment
 IS_PRODUCTION = os.getenv("IS_PRODUCTION", "0") == "1"
