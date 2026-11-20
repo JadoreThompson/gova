@@ -33,6 +33,11 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
+async def get_db_session_dep() -> AsyncGenerator[AsyncSession, None]:
+    async with get_db_session() as session:
+        yield session
+
+
 @contextmanager
 def get_db_session_sync() -> Generator[Session, None, None]:
     global smaker_sync
