@@ -1,5 +1,7 @@
 import click
 
+from cli.db import db
+from cli.moderator import moderator
 from cli.outbox import outbox
 
 
@@ -8,6 +10,8 @@ def cli() -> None:
     pass
 
 
+cli.add_command(db)
+cli.add_command(moderator)
 cli.add_command(outbox)
 
 
