@@ -2,3 +2,5 @@
 - [ ] Potentially set up CDC for moderator status event emission
 - [x] Event publisher needs to use outbox
 - [ ] Moderator manager monitoring
+  - [ ] integration tests
+  - [ ] live tests
