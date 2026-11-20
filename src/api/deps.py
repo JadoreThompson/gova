@@ -6,7 +6,7 @@ from auth.service import AuthService
 from community.service import CommunityService
 from config import JWT_COOKIE_ALIAS
 from event.publisher import AIOKafkaEventPublisher, EventPublisher
-from moderator.service import ModeratorService
+from moderator.service.moderator import ModeratorService
 from security.jwt.exception import JWTException
 from security.jwt.schema import JWTPayload
 from security.jwt.service import JWTService

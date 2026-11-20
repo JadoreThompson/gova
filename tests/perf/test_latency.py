@@ -43,7 +43,7 @@ def _target_messages() -> list[corpus.MockMessage]:
 
 
 async def _collect_latencies_ms(targets: list[corpus.MockMessage]) -> list[float]:
-    moderator = make_moderator(require_approval=True)
+    moderator = make_moderator()
     target_ids = {message.id for message in targets}
     latencies_ms: list[float] = []
 
@@ -54,7 +54,7 @@ async def _collect_latencies_ms(targets: list[corpus.MockMessage]) -> list[float
                 if message.id not in target_ids:
                     continue
                 started = time.perf_counter()
-                await moderator.on_message(message)
+                await moderator.process_message(message)
                 latencies_ms.append((time.perf_counter() - started) * 1000.0)
 
     return latencies_ms

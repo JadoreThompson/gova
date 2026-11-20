@@ -5,7 +5,7 @@ from community.enums import CommunityPlatform
 from community.model import Community
 from community.schema import CommunityCreate
 from community.service import CommunityService
-from moderator.service import ModeratorService
+from moderator.service.moderator import ModeratorService
 from user.model import User  # noqa: F401  (registers the users table)
 
 

@@ -1,8 +1,9 @@
 import uuid
 
-from sqlalchemy import select
+import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from community.enums import CommunityPlatform
 from config import KAFKA_MODERATOR_EVENTS_TOPIC
 from event.publisher import EventPublisher
 from moderator.event import (
@@ -75,7 +76,7 @@ class ModeratorService:
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> ModeratorResponse:
         moderator = await db_sess.scalar(
-            select(Moderator).where(
+            sa.select(Moderator).where(
                 Moderator.id == id,
                 Moderator.user_id == user_id,
             )
@@ -92,6 +93,16 @@ class ModeratorService:
             raise ModeratorNotFoundException()
         return ModeratorResponse.from_model(moderator)
 
+    async def get_by_community(
+        self, community_id: uuid.UUID, db_sess: AsyncSession
+    ) -> ModeratorResponse:
+        moderator = await db_sess.scalar(
+            sa.select(Moderator).where(Moderator.community_id == community_id)
+        )
+        if moderator is None:
+            raise ModeratorNotFoundException()
+        return ModeratorResponse.from_model(moderator)
+
     async def list(
         self,
         user_id: uuid.UUID,
@@ -102,7 +113,7 @@ class ModeratorService:
         limit: int = 50,
     ) -> tuple[list[ModeratorResponse], bool]:
         stmt = (
-            select(Moderator)
+            sa.select(Moderator)
             .where(Moderator.user_id == user_id)
             .order_by(Moderator.created_at.desc())
         )
@@ -124,7 +135,7 @@ class ModeratorService:
         db_sess: AsyncSession,
     ) -> ModeratorResponse:
         moderator = await db_sess.scalar(
-            select(Moderator).where(
+            sa.select(Moderator).where(
                 Moderator.id == id,
                 Moderator.user_id == user_id,
             )
@@ -145,7 +156,7 @@ class ModeratorService:
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> None:
         moderator = await db_sess.scalar(
-            select(Moderator).where(
+            sa.select(Moderator).where(
                 Moderator.id == id,
                 Moderator.user_id == user_id,
             )
@@ -158,7 +169,7 @@ class ModeratorService:
         self, community_id: uuid.UUID, db_sess: AsyncSession
     ) -> bool:
         active_moderator = await db_sess.scalar(
-            select(Moderator.id)
+            sa.select(Moderator.id)
             .where(
                 Moderator.community_id == community_id,
                 Moderator.status != ModeratorStatus.OFFLINE.value,

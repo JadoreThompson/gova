@@ -30,7 +30,7 @@ from core.db.client import POSTGRES_ENGINE_SYNC
 from core.db.model import Base
 from core.db.session import get_db_session_sync
 from security.jwt.service import JWTService
-from moderator.service import ModeratorService
+from moderator.service.moderator import ModeratorService
 from tests.perf.flags import PERF_ENV_VAR, perf_enabled, real_llm_enabled
 from user.service import UserService
 

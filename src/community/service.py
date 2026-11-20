@@ -3,7 +3,8 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from moderator.service import ModeratorService
+from community.enums import CommunityPlatform
+from moderator.service.moderator import ModeratorService
 from .exception import (
     CommunityAlreadyExistsException,
     CommunityHasActiveModeratorsException,
@@ -61,6 +62,21 @@ class CommunityService:
             raise CommunityNotFoundException()
         return CommunityResponse.from_model(community)
 
+    async def get_by_community(
+        self,
+        community_id: str,
+        platform: CommunityPlatform,
+        db_sess: AsyncSession,
+    ) -> CommunityResponse:
+        community = await db_sess.scalar(
+            select(Community).where(
+                Community.community_id == community_id, Community.platform == platform
+            )
+        )
+        if community is None:
+            raise CommunityNotFoundException()
+        return CommunityResponse.from_model(community)
+
     async def list(
         self,
         user_id: uuid.UUID,
@@ -79,8 +95,7 @@ class CommunityService:
         communities = list(result.scalars().all())
         has_next = len(communities) > limit
         return [
-            CommunityResponse.from_model(community)
-            for community in communities[:limit]
+            CommunityResponse.from_model(community) for community in communities[:limit]
         ], has_next
 
     async def update(
