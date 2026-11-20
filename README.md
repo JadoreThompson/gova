@@ -4,7 +4,6 @@ Gova is your AI powered community moderator, keepign your community cleanin real
 
 ## Performance
 
-
 | Scope                                | Messages | Total chars | Mean chars | Median | Min | Max | Mean words |
 | ------------------------------------ | -------: | ----------: | ---------: | -----: | --: | --: | ---------: |
 | Full corpus                          |      360 |       5,714 |      15.87 |     15 |   2 |  62 |       3.06 |
@@ -59,3 +58,9 @@ roughly 1.1k-1.6k messages per minute in this run.
 - Tighten `GOVA_PERF_LATENCY_BUDGET_MS` to catch latency regressions. The
   default is 250 ms for stubbed runs and 1000 ms for real-LLM runs; the measured
   real p99 of 544.50 ms leaves headroom under the latter.
+
+
+## Architecture
+
+### Scheduling
+
