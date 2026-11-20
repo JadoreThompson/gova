@@ -30,3 +30,7 @@ def real_llm_max_messages(default: int = 60) -> int:
     if not raw:
         return default
     return max(1, int(raw))
+
+
+def is_seeding() -> bool:
+    return _enabled("GOVA_SEED")

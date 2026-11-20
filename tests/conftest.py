@@ -33,7 +33,7 @@ from security.jwt.service import JWTService
 from moderator.service.moderator import ModeratorService
 from moderator.service.assignment import ModeratorWorkerAssignmentService
 from moderator.service.worker import ModeratorWorkerService
-from tests.perf.flags import PERF_ENV_VAR, perf_enabled, real_llm_enabled
+from tests.perf.flags import PERF_ENV_VAR, is_seeding, perf_enabled, real_llm_enabled
 from user.service import UserService
 
 # config.py reads these at import time. When the LLM is stubbed, dummy values
@@ -71,6 +71,10 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session", autouse=True)
 def postgres_container():
+    if is_seeding():
+        yield None
+        return
+
     with PostgresContainer(
         "postgres:18",
         username=POSTGRES_USERNAME,
@@ -82,6 +86,10 @@ def postgres_container():
 
 @pytest.fixture(scope="session", autouse=True)
 def kafka_container():
+    if is_seeding():
+        yield
+        return
+
     port = int(KAFKA_BOOTSTRAP_SERVERS.split(":")[1])
     with KafkaContainer().with_kraft().with_bind_ports(9093, port) as kafka:
         yield kafka
@@ -89,12 +97,20 @@ def kafka_container():
 
 @pytest.fixture(scope="session", autouse=True)
 def redis_container():
+    if is_seeding():
+        yield
+        return
+
     with RedisContainer("redis:8").with_bind_ports(6379, REDIS_PORT) as redis:
         yield redis
 
 
 @pytest.fixture(scope="session", autouse=True)
 def setup(postgres_container):
+    if is_seeding():
+        yield
+        return
+
     from sqlalchemy import text
 
     with POSTGRES_ENGINE_SYNC.begin() as conn:
