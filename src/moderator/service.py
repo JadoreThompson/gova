@@ -13,7 +13,7 @@ from moderator.event import (
 )
 from moderator.enums import ModeratorStatus
 from moderator.exception import ModeratorNotFoundException
-from moderator.model import Moderators
+from moderator.model import Moderator
 from moderator.schema import ModeratorCreate, ModeratorResponse, ModeratorUpdate
 
 
@@ -60,7 +60,7 @@ class ModeratorService:
         user_id: uuid.UUID,
         db_sess: AsyncSession,
     ) -> ModeratorResponse:
-        moderator = Moderators(
+        moderator = Moderator(
             user_id=user_id,
             community_id=request.community_id,
             name=request.name,
@@ -75,9 +75,9 @@ class ModeratorService:
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> ModeratorResponse:
         moderator = await db_sess.scalar(
-            select(Moderators).where(
-                Moderators.id == id,
-                Moderators.user_id == user_id,
+            select(Moderator).where(
+                Moderator.id == id,
+                Moderator.user_id == user_id,
             )
         )
         if moderator is None:
@@ -87,7 +87,7 @@ class ModeratorService:
     async def get_by_id(
         self, id: uuid.UUID, db_sess: AsyncSession, lock: bool = True
     ) -> ModeratorResponse:
-        moderator = await db_sess.get(Moderators, id, with_for_update=lock)
+        moderator = await db_sess.get(Moderator, id, with_for_update=lock)
         if moderator is None:
             raise ModeratorNotFoundException()
         return ModeratorResponse.from_model(moderator)
@@ -102,12 +102,12 @@ class ModeratorService:
         limit: int = 50,
     ) -> tuple[list[ModeratorResponse], bool]:
         stmt = (
-            select(Moderators)
-            .where(Moderators.user_id == user_id)
-            .order_by(Moderators.created_at.desc())
+            select(Moderator)
+            .where(Moderator.user_id == user_id)
+            .order_by(Moderator.created_at.desc())
         )
         if community_id is not None:
-            stmt = stmt.where(Moderators.community_id == community_id)
+            stmt = stmt.where(Moderator.community_id == community_id)
 
         result = await db_sess.execute(stmt.offset((page - 1) * limit).limit(limit + 1))
         moderators = list(result.scalars().all())
@@ -124,9 +124,9 @@ class ModeratorService:
         db_sess: AsyncSession,
     ) -> ModeratorResponse:
         moderator = await db_sess.scalar(
-            select(Moderators).where(
-                Moderators.id == id,
-                Moderators.user_id == user_id,
+            select(Moderator).where(
+                Moderator.id == id,
+                Moderator.user_id == user_id,
             )
         )
         if moderator is None:
@@ -145,9 +145,9 @@ class ModeratorService:
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> None:
         moderator = await db_sess.scalar(
-            select(Moderators).where(
-                Moderators.id == id,
-                Moderators.user_id == user_id,
+            select(Moderator).where(
+                Moderator.id == id,
+                Moderator.user_id == user_id,
             )
         )
         if moderator is None:
@@ -158,10 +158,10 @@ class ModeratorService:
         self, community_id: uuid.UUID, db_sess: AsyncSession
     ) -> bool:
         active_moderator = await db_sess.scalar(
-            select(Moderators.id)
+            select(Moderator.id)
             .where(
-                Moderators.community_id == community_id,
-                Moderators.status != ModeratorStatus.OFFLINE.value,
+                Moderator.community_id == community_id,
+                Moderator.status != ModeratorStatus.OFFLINE.value,
             )
             .limit(1)
         )

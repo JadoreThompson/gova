@@ -32,13 +32,6 @@ class User(Base):
         sa.DateTime(timezone=True), nullable=True
     )
 
-    communities: Mapped[list["Community"]] = relationship(
-        back_populates="user", passive_deletes=True
-    )
-    moderators: Mapped[list["Moderators"]] = relationship(
-        back_populates="user", passive_deletes=True
-    )
-
     __table_args__ = (
         sa.CheckConstraint(
             "length(trim(username)) > 0",

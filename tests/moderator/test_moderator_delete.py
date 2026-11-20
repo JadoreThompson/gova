@@ -2,7 +2,7 @@ import pytest
 
 from core.db.session import get_db_session
 from moderator.exception import ModeratorNotFoundException
-from moderator.model import Moderators
+from moderator.model import Moderator
 from .util import make_community, make_create
 
 
@@ -24,7 +24,7 @@ async def test_delete_removes_moderator(
         await db_sess.commit()
 
     async with get_db_session() as db_sess:
-        stored = await db_sess.get(Moderators, moderator.id)
+        stored = await db_sess.get(Moderator, moderator.id)
 
     assert stored is None
 
@@ -48,6 +48,6 @@ async def test_delete_raises_when_moderator_belongs_to_another_user(
             await moderator_service.delete(moderator.id, other_id, db_sess)
 
     async with get_db_session() as db_sess:
-        stored = await db_sess.get(Moderators, moderator.id)
+        stored = await db_sess.get(Moderator, moderator.id)
 
     assert stored is not None
