@@ -2,7 +2,7 @@ import pytest
 
 from core.db.session import get_db_session
 from moderator.enums import ModeratorStatus
-from moderator.model import Moderators
+from moderator.model import Moderator
 from .util import make_community, make_create
 
 
@@ -17,7 +17,7 @@ async def test_has_active_in_community_returns_true_for_online_moderator(
         moderator = await moderator_service.create(
             make_create(community.id), user_id, db_sess
         )
-        stored = await db_sess.get(Moderators, moderator.id)
+        stored = await db_sess.get(Moderator, moderator.id)
         stored.status = ModeratorStatus.ONLINE
         await db_sess.commit()
 

@@ -21,13 +21,6 @@ class Community(Base):
     community_id: Mapped[str] = mapped_column(sa.String, nullable=False)
     policy: Mapped[str] = mapped_column(sa.String, nullable=False)
 
-    user: Mapped["User"] = relationship(
-        back_populates="communities", passive_deletes=True
-    )
-    moderators: Mapped[list["Moderators"]] = relationship(
-        back_populates="community", passive_deletes=True
-    )
-
     __table_args__ = (
         sa.CheckConstraint(
             "length(trim(policy)) > 0",

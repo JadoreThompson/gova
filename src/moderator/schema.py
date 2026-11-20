@@ -5,8 +5,13 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from community.enums import CommunityPlatform
 from moderator.enums import ModeratorStatus
-from moderator.model import Moderators
+from moderator.model import (
+    ModeratorWorker,
+    ModeratorWorkerAssignment,
+    Moderator,
+)
 
 
 class ModeratorCreate(BaseModel):
@@ -29,7 +34,7 @@ class ModeratorResponse(BaseModel):
     created_at: datetime
 
     @classmethod
-    def from_model(cls, moderator: Moderators) -> "ModeratorResponse":
+    def from_model(cls, moderator: Moderator) -> "ModeratorResponse":
         return cls(
             id=moderator.id,
             community_id=moderator.community_id,
@@ -37,4 +42,50 @@ class ModeratorResponse(BaseModel):
             action_config=moderator.action_config,
             status=moderator.status,
             created_at=moderator.created_at,
+        )
+
+
+class ModeratorWorkerCreate(BaseModel):
+    id: str = Field(min_length=1)
+    host: str = Field(min_length=1)
+    port: int = Field(ge=1, le=65535)
+    capacity: int = Field(ge=1)
+    platform: CommunityPlatform = CommunityPlatform.DISCORD
+
+
+class ModeratorWorkerResponse(BaseModel):
+    id: str
+    platform: CommunityPlatform
+    host: str
+    port: int
+    count: int
+    capacity: int
+    last_heartbeat: int
+
+    @classmethod
+    def from_model(cls, worker: ModeratorWorker) -> "ModeratorWorkerResponse":
+        return cls(
+            id=worker.id,
+            platform=worker.platform,
+            host=worker.host,
+            port=worker.port,
+            count=worker.count,
+            capacity=worker.capacity,
+            last_heartbeat=worker.last_heartbeat,
+        )
+
+
+class ModeratorWorkerAssignmentResponse(BaseModel):
+    id: uuid.UUID
+    moderator_id: uuid.UUID
+    worker_id: str
+
+    @classmethod
+    def from_model(
+        cls, assignment: ModeratorWorkerAssignment
+    ) -> "ModeratorWorkerAssignmentResponse":
+        return cls(
+            id=assignment.id,
+            moderator_id=assignment.moderator_id,
+            worker_id=assignment.worker_id,
         )

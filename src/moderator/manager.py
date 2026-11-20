@@ -20,7 +20,7 @@ from moderator.event import (
     ModeratorStoppedEvent,
     parse_moderator_event,
 )
-from moderator.model import Moderators
+from moderator.model import Moderator
 from moderator.registry import ModeratorRegistry
 from moderator.schema import ModeratorResponse
 from moderator.service import ModeratorService
@@ -83,8 +83,8 @@ class ModeratorManager:
                 return
 
             await db_sess.execute(
-                sa.update(Moderators)
-                .where(Moderators.id == moderator.id)
+                sa.update(Moderator)
+                .where(Moderator.id == moderator.id)
                 .values(status=ModeratorStatus.ONLINE)
             )
 
@@ -128,8 +128,8 @@ class ModeratorManager:
             self._registry.remove_moderator(moderator_id)
 
             await db_sess.execute(
-                sa.update(Moderators)
-                .where(Moderators.id == moderator_id)
+                sa.update(Moderator)
+                .where(Moderator.id == moderator_id)
                 .values(status=ModeratorStatus.OFFLINE)
             )
 

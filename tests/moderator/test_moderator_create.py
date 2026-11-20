@@ -2,7 +2,7 @@ import pytest
 
 from core.db.session import get_db_session
 from moderator.enums import ModeratorStatus
-from moderator.model import Moderators
+from moderator.model import Moderator
 from moderator.schema import ModeratorCreate, ModeratorResponse
 from .util import make_community, make_create
 
@@ -26,7 +26,7 @@ async def test_create_links_moderator_to_user_and_community(
     assert moderator.status == ModeratorStatus.OFFLINE
 
     async with get_db_session() as db_sess:
-        stored = await db_sess.get(Moderators, moderator.id)
+        stored = await db_sess.get(Moderator, moderator.id)
 
     assert stored is not None
     assert stored.user_id == user_id
