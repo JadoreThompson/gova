@@ -15,6 +15,7 @@ from moderator.schema import ModeratorResponse
 from moderator.service.assignment import ModeratorWorkerAssignmentService
 from moderator.service.discord import DiscordModeratorService
 from moderator.service.moderator import ModeratorService
+from moderator.service.twitch import TwitchModeratorService
 
 
 class ModeratorManagerService:
@@ -25,12 +26,14 @@ class ModeratorManagerService:
         moderator_worker_assignment_service: ModeratorWorkerAssignmentService,
         registry: ModeratorRegistry,
         event_publisher: EventPublisher,
+        twitch_bot_id: str | None = None,
     ) -> None:
         self._moderator_service = moderator_service
         self._community_service = community_service
         self._moderator_worker_assignment_service = moderator_worker_assignment_service
         self._registry = registry
         self._event_publisher = event_publisher
+        self._twitch_bot_id = twitch_bot_id
 
     async def create(
         self, moderator_id: uuid.UUID, worker_id: str, db_sess: AsyncSession
@@ -89,6 +92,8 @@ class ModeratorManagerService:
     ) -> BaseModeratorService:
         if community.platform == CommunityPlatform.DISCORD:
             return self._create_discord_moderator(community, moderator)
+        if community.platform == CommunityPlatform.TWITCH:
+            return self._create_twitch_moderator(community, moderator)
         raise ValueError(f"Unsupported platform: {community.platform}")
 
     def _create_discord_moderator(
@@ -100,6 +105,17 @@ class ModeratorManagerService:
             guild_id=int(community.community_id),
             policy=community.policy,
             event_publisher=self._event_publisher,
+        )
+
+    def _create_twitch_moderator(
+        self, community: CommunityResponse, moderator: ModeratorResponse
+    ) -> TwitchModeratorService:
+        return TwitchModeratorService(
+            id=moderator.id,
+            channel_id=community.community_id,
+            policy=community.policy,
+            event_publisher=self._event_publisher,
+            bot_id=self._twitch_bot_id,
         )
 
     async def destroy(
