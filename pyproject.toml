@@ -25,6 +25,7 @@ dependencies = [
     "redis>=8.1.0",
     "sqlalchemy>=2.1.8",
     "testcontainers>=4.15.0",
+    "twitchio>=3.3.2",
     "uvicorn>=0.54.0",
 ]
 
