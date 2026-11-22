@@ -142,6 +142,9 @@ class TwitchIngestionPipeline(IngestionPipeline):
                     )
                 )
                 for assignment in assignments:
+                    if assignment.moderator_id in self._registry:
+                        continue
+
                     try:
                         await self._moderator_manager_service.create(
                             assignment.moderator_id, self._worker_id, db_sess
