@@ -39,4 +39,4 @@ class ModeratorRegistry:
         return moderator_id in self._moderators
 
     def __iter__(self):
-        return self._moderators.values()
+        return iter(self._moderators.values())
