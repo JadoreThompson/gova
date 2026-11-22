@@ -1,12 +1,17 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
+from community.enums import CommunityPlatform
 from lib.util import get_datetime
 from moderator.action.discord import DiscordAction
+from moderator.action.twitch import TwitchAction
+
+discord_action_adapter = TypeAdapter(DiscordAction)
+twitch_action_adapter = TypeAdapter(TwitchAction)
 
 
 class ModeratorEventType(str, Enum):
@@ -26,8 +31,17 @@ class ModeratorEvent(BaseModel):
 
 class ModeratorActionEvent(ModeratorEvent):
     type: Literal[ModeratorEventType.ACTION] = ModeratorEventType.ACTION
-    action: DiscordAction
-    message_id: int
+    platform: CommunityPlatform = CommunityPlatform.DISCORD
+    action: Any
+    message_id: int | str
+
+    @model_validator(mode="after")
+    def _validate_action(self) -> "ModeratorActionEvent":
+        if self.platform == CommunityPlatform.TWITCH:
+            self.action = twitch_action_adapter.validate_python(self.action)
+        else:
+            self.action = discord_action_adapter.validate_python(self.action)
+        return self
 
 
 class ModeratorStartEvent(ModeratorEvent):
