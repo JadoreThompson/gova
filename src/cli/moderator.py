@@ -117,6 +117,7 @@ def worker(id, capacity, host, port, platform, heartbeat_interval):
             if not worker.is_ready:
                 raise Exception("Worker failed to ready")
 
+            ingestion_pipeline.set_worker_id(worker.id)
             tg.create_task(ingestion_pipeline.run())
 
     asyncio.run(_func())

@@ -4,8 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from security.jwt.service import JWTService
 from user.schema import UserResponse
 from user.service import UserService
-from .exception import InvalidCredentialsException
-from .schema import LoginRequest
+from ..exception import InvalidCredentialsException
+from ..schema import LoginRequest
 
 
 class AuthService:

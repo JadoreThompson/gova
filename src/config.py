@@ -57,11 +57,12 @@ DISCORD_BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
 # Client credentials are used to generate/refresh the app token and to manage
 # the bot's user token. The bot token/refresh token are optional so that a
 # previously saved TwitchIO token file can be reused instead.
-TWITCH_CLIENT_ID = os.environ.get("TWITCH_CLIENT_ID", "")
-TWITCH_CLIENT_SECRET = os.environ.get("TWITCH_CLIENT_SECRET", "")
+TWITCH_CLIENT_ID = os.environ["TWITCH_CLIENT_ID"]
+TWITCH_CLIENT_SECRET = os.environ["TWITCH_CLIENT_SECRET"]
 TWITCH_BOT_ID = os.environ.get("TWITCH_BOT_ID", "")
 TWITCH_BOT_TOKEN = os.environ.get("TWITCH_BOT_TOKEN", "")
 TWITCH_BOT_REFRESH_TOKEN = os.environ.get("TWITCH_BOT_REFRESH_TOKEN", "")
+TWITCH_REDIRECT_URI = os.environ["TWITCH_REDIRECT_URI"]
 
 
 # HTTP API

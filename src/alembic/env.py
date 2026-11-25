@@ -5,6 +5,16 @@ from sqlalchemy import pool
 
 from alembic import context
 
+from config import SRC_FOLDER
+from core.db.model import Base
+from lib.util import import_all_modules
+
+# Import every module under `src/` so all `Base` subclasses (the ORM models)
+# are registered on `Base.metadata` before autogenerate inspects it.
+# `alembic` is skipped because it is the migrations directory itself and it
+# shadows the installed `alembic` package name.
+import_all_modules(SRC_FOLDER, exclude={"alembic"})
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -16,9 +26,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

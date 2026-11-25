@@ -13,7 +13,7 @@ from config import (
 from moderator.router import router as moderator_router
 from user.router import router as user_router
 
-app = FastAPI()
+app = FastAPI(title="Gova API")
 
 # Middlewares
 # app.add_middleware(ExceptionHandlerMiddleware)

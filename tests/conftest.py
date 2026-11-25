@@ -16,7 +16,8 @@ from testcontainers.kafka import KafkaContainer
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 
-from auth.service import AuthService
+from auth.service.auth import AuthService
+from auth.service.twitch import TwitchOAuthService
 from community.service import CommunityService
 from config import (
     KAFKA_BOOTSTRAP_SERVERS,
@@ -106,7 +107,7 @@ def redis_container():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup(postgres_container):
+def setup_db(postgres_container):
     if is_seeding():
         yield
         return
@@ -177,6 +178,15 @@ def jwt_service():
 @pytest.fixture
 def auth_service(user_service, jwt_service):
     return AuthService(user_service=user_service, jwt_service=jwt_service)
+
+
+@pytest.fixture
+def twitch_oauth_service():
+    return TwitchOAuthService(
+        client_id="test-client-id",
+        client_secret="test-client-secret",
+        redirect_uri="https://example.com/auth/twitch/callback",
+    )
 
 
 # =============
