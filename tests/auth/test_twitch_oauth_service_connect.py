@@ -5,7 +5,7 @@ from sqlalchemy import select
 from auth.model import PlatformToken
 from auth.schema import PlatformTokenResponse
 from auth.service.twitch import TwitchOAuthService
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from core.db.session import get_db_session
 
 
@@ -41,7 +41,7 @@ async def test_connect_stores_platform_token(create_user):
 
     assert isinstance(result, PlatformTokenResponse)
     assert result.user_id == user_id
-    assert result.platform == CommunityPlatform.TWITCH
+    assert result.platform == ModeratorPlatform.TWITCH
 
     async with get_db_session() as db_sess:
         stored = await db_sess.scalar(
@@ -51,7 +51,7 @@ async def test_connect_stores_platform_token(create_user):
     assert stored is not None
     assert stored.token == "access-token"
     assert stored.refresh_token == "refresh-token"
-    assert stored.platform == CommunityPlatform.TWITCH
+    assert stored.platform == ModeratorPlatform.TWITCH
 
 
 @pytest.mark.asyncio(loop_scope="session")

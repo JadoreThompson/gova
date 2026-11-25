@@ -12,6 +12,7 @@ from moderator.event import (
     ModeratorStartEvent,
     ModeratorStopEvent,
 )
+from moderator.enums import ModeratorPlatform
 from moderator.exception import ModeratorNotFoundException
 from moderator.service.moderator import ModeratorService
 
@@ -33,7 +34,9 @@ async def test_moderator_control_publishes_owned_moderator_event(
     db_sess = AsyncMock()
     db_sess.scalar.return_value = SimpleNamespace(
         id=moderator_id,
-        community_id=uuid.uuid4(),
+        platform=ModeratorPlatform.DISCORD,
+        platform_community_id="community-1",
+        community_policy="Be nice.",
         name="Moderator",
         action_config={},
         status="offline",

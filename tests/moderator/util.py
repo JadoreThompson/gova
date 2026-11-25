@@ -1,15 +1,15 @@
 import uuid
 
-from community.service import CommunityService
-from community.enums import CommunityPlatform
-from community.schema import CommunityCreate
 from core.db.session import get_db_session
+from moderator.enums import ModeratorPlatform
 from moderator.schema import ModeratorCreate
 
 
-def make_create(community_id: uuid.UUID, **overrides) -> ModeratorCreate:
+def make_create(**overrides) -> ModeratorCreate:
     values = {
-        "community_id": community_id,
+        "platform": ModeratorPlatform.DISCORD,
+        "platform_community_id": f"community-{uuid.uuid4()}",
+        "community_policy": "Be nice.",
         "name": "Moderator",
         "action_config": {},
     }
@@ -17,26 +17,10 @@ def make_create(community_id: uuid.UUID, **overrides) -> ModeratorCreate:
     return ModeratorCreate(**values)
 
 
-async def make_community(community_service, user_id: uuid.UUID):
-    async with get_db_session() as db_sess:
-        community = await community_service.create(
-            CommunityCreate(
-                platform=CommunityPlatform.DISCORD,
-                community_id=f"community-{uuid.uuid4()}",
-                policy="Be nice.",
-            ),
-            user_id,
-            db_sess,
-        )
-        await db_sess.commit()
-        return community
-
-
-async def make_moderator(moderator_service, community_service, user_id: uuid.UUID):
-    community = await make_community(community_service, user_id)
+async def make_moderator(moderator_service, user_id: uuid.UUID, **overrides):
     async with get_db_session() as db_sess:
         moderator = await moderator_service.create(
-            make_create(community.id), user_id, db_sess
+            make_create(**overrides), user_id, db_sess
         )
         await db_sess.commit()
         return moderator

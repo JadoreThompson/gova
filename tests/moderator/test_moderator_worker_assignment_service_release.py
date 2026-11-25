@@ -12,7 +12,6 @@ from .util import make_moderator
 @pytest.mark.asyncio(loop_scope="session")
 async def test_release_decrements_worker_count_and_removes_assignment(
     moderator_service,
-    community_service,
     create_user,
     moderator_worker_service,
     moderator_worker_assignment_service,
@@ -29,9 +28,7 @@ async def test_release_decrements_worker_count_and_removes_assignment(
         )
         await db_sess.commit()
 
-    moderator = await make_moderator(
-        moderator_service, community_service, create_user()
-    )
+    moderator = await make_moderator(moderator_service, create_user())
     moderator_id = moderator.id
     async with get_db_session() as db_sess:
         await moderator_worker_assignment_service.assign(

@@ -20,11 +20,8 @@ import pytest
 import sqlalchemy as sa
 from argon2 import PasswordHasher
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from sqlalchemy import delete
-from community.model import Community
-from community.schema import CommunityCreate
-from community.service import CommunityService
 from core.db.client import POSTGRES_ENGINE_SYNC
 from core.db.model import Base
 from core.db.session import get_db_session
@@ -47,7 +44,7 @@ class SeedModerator:
 @dataclass
 class SeedWorker:
     id: str
-    platform: CommunityPlatform
+    platform: ModeratorPlatform
     capacity: int
     count: int
 
@@ -55,7 +52,7 @@ class SeedWorker:
 @dataclass
 class SchedulingSeed:
     user_id: uuid.UUID
-    communities: dict[str, uuid.UUID]
+    communities: dict[str, str]
     moderators: dict[str, list[SeedModerator]]
     workers: dict[str, SeedWorker]
     assignments: dict[uuid.UUID, str] = field(default_factory=dict)
@@ -76,9 +73,6 @@ async def cleanup_seed_data(db_sess) -> None:
         delete(ModeratorWorker).where(ModeratorWorker.id.like("seed-%"))
     )
     await db_sess.execute(delete(Moderator).where(Moderator.name.like("Seed %")))
-    await db_sess.execute(
-        delete(Community).where(Community.community_id.like("seed-%"))
-    )
     await db_sess.execute(delete(User).where(User.username.like("seed-owner-%")))
 
 
@@ -90,7 +84,6 @@ async def seed_scheduling_data() -> SchedulingSeed:
 
         user_service = UserService(PasswordHasher())
         moderator_service = ModeratorService(AIOKafkaEventPublisher())
-        community_service = CommunityService(moderator_service)
 
         user = await user_service.create(
             UserCreate(
@@ -101,55 +94,41 @@ async def seed_scheduling_data() -> SchedulingSeed:
             db_sess,
         )
 
-        discord = await community_service.create(
-            CommunityCreate(
-                platform=CommunityPlatform.DISCORD,
-                community_id=f"seed-discord-{suffix}",
-                policy="Be respectful and keep discussions on topic.",
-            ),
-            user.id,
-            db_sess,
-        )
-        youtube = await community_service.create(
-            CommunityCreate(
-                platform=CommunityPlatform.YOUTUBE,
-                community_id=f"seed-youtube-{suffix}",
-                policy="No spam or harassment in the comments.",
-            ),
-            user.id,
-            db_sess,
-        )
+        discord_community_id = f"seed-discord-{suffix}"
+        youtube_community_id = f"seed-youtube-{suffix}"
 
         discord_moderators = [
             await moderator_service.create(
                 ModeratorCreate(
-                    community_id=discord.id,
-                    name=f"Seed Discord Moderator {i}",
+                    platform=ModeratorPlatform.DISCORD,
+                    platform_community_id=discord_community_id,
+                    community_policy="Be respectful and keep discussions on topic.",
+                    name="Seed Discord Moderator",
                     action_config={},
                 ),
                 user.id,
                 db_sess,
             )
-            for i in range(1, 7)
         ]
         youtube_moderators = [
             await moderator_service.create(
                 ModeratorCreate(
-                    community_id=youtube.id,
-                    name=f"Seed YouTube Moderator {i}",
+                    platform=ModeratorPlatform.YOUTUBE,
+                    platform_community_id=youtube_community_id,
+                    community_policy="No spam or harassment in the comments.",
+                    name="Seed YouTube Moderator",
                     action_config={},
                 ),
                 user.id,
                 db_sess,
             )
-            for i in range(1, 3)
         ]
 
         workers = {}
         # workers = {
         #     "discord_failed": ModeratorWorker(
         #         id=f"seed-discord-failed-{suffix}",
-        #         platform=CommunityPlatform.DISCORD,
+        #         platform=ModeratorPlatform.DISCORD,
         #         host="127.0.0.1",
         #         port=9201,
         #         count=4,
@@ -160,7 +139,7 @@ async def seed_scheduling_data() -> SchedulingSeed:
         #     ),
         #     "discord_full": ModeratorWorker(
         #         id=f"seed-discord-full-{suffix}",
-        #         platform=CommunityPlatform.DISCORD,
+        #         platform=ModeratorPlatform.DISCORD,
         #         host="127.0.0.1",
         #         port=9202,
         #         count=2,
@@ -171,7 +150,7 @@ async def seed_scheduling_data() -> SchedulingSeed:
         #     ),
         #     "discord_available": ModeratorWorker(
         #         id=f"seed-discord-available-{suffix}",
-        #         platform=CommunityPlatform.DISCORD,
+        #         platform=ModeratorPlatform.DISCORD,
         #         host="127.0.0.1",
         #         port=9203,
         #         count=0,
@@ -182,7 +161,7 @@ async def seed_scheduling_data() -> SchedulingSeed:
         #     ),
         #     "youtube_failed": ModeratorWorker(
         #         id=f"seed-youtube-failed-{suffix}",
-        #         platform=CommunityPlatform.YOUTUBE,
+        #         platform=ModeratorPlatform.YOUTUBE,
         #         host="127.0.0.1",
         #         port=9204,
         #         count=2,
@@ -217,7 +196,10 @@ async def seed_scheduling_data() -> SchedulingSeed:
 
         return SchedulingSeed(
             user_id=user.id,
-            communities={"discord": discord.id, "youtube": youtube.id},
+            communities={
+                "discord": discord_community_id,
+                "youtube": youtube_community_id,
+            },
             moderators={
                 "discord": [
                     SeedModerator(id=m.id, name=m.name) for m in discord_moderators
@@ -229,7 +211,7 @@ async def seed_scheduling_data() -> SchedulingSeed:
             workers={
                 key: SeedWorker(
                     id=worker.id,
-                    platform=CommunityPlatform(worker.platform),
+                    platform=ModeratorPlatform(worker.platform),
                     capacity=worker.capacity,
                     count=worker.count,
                 )

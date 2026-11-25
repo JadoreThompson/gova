@@ -4,19 +4,16 @@ from core.db.session import get_db_session
 from moderator.exception import ModeratorNotFoundException
 from moderator.model import Moderator
 from moderator.schema import ModeratorUpdate
-from .util import make_community, make_create
+from .util import make_create
 
 
 @pytest.mark.asyncio(loop_scope="session")
-async def test_update_changes_moderator(
-    moderator_service, community_service, create_user
-):
+async def test_update_changes_moderator(moderator_service, create_user):
     user_id = create_user()
-    community = await make_community(community_service, user_id)
 
     async with get_db_session() as db_sess:
         moderator = await moderator_service.create(
-            make_create(community.id, name="Old"), user_id, db_sess
+            make_create(name="Old"), user_id, db_sess
         )
         await db_sess.commit()
 
@@ -39,15 +36,14 @@ async def test_update_changes_moderator(
 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_update_raises_when_moderator_belongs_to_another_user(
-    moderator_service, community_service, create_user
+    moderator_service, create_user
 ):
     owner_id = create_user()
     other_id = create_user()
-    community = await make_community(community_service, owner_id)
 
     async with get_db_session() as db_sess:
         moderator = await moderator_service.create(
-            make_create(community.id), owner_id, db_sess
+            make_create(), owner_id, db_sess
         )
         await db_sess.commit()
 

@@ -3,8 +3,7 @@ import asyncio
 import click
 import discord
 
-from community.enums import CommunityPlatform
-from community.service import CommunityService
+from moderator.enums import ModeratorPlatform
 from config import (
     TWITCH_BOT_ID,
     TWITCH_BOT_REFRESH_TOKEN,
@@ -24,7 +23,7 @@ from moderator.worker.monitor import ModeratorWorkerMonitor
 from moderator.worker.worker import ModeratorWorker
 
 PLATFORM_CHOICES = click.Choice(
-    [platform.value for platform in CommunityPlatform], case_sensitive=False
+    [platform.value for platform in ModeratorPlatform], case_sensitive=False
 )
 
 
@@ -39,29 +38,27 @@ def moderator():
 @click.option("--host", type=str, required=True)
 @click.option("--port", type=int, required=True)
 @click.option(
-    "--platform", type=PLATFORM_CHOICES, default=CommunityPlatform.DISCORD.value
+    "--platform", type=PLATFORM_CHOICES, default=ModeratorPlatform.DISCORD.value
 )
 @click.option("--heartbeat-interval", type=click.IntRange(min=1), default=5)
 def worker(id, capacity, host, port, platform, heartbeat_interval):
-    platform = CommunityPlatform(platform)
+    platform = ModeratorPlatform(platform)
     event_publisher = AIOKafkaEventPublisher()
     moderator_service = ModeratorService(event_publisher)
     registry = ModeratorRegistry()
-    community_service = CommunityService(moderator_service)
     moderator_worker_service = ModeratorWorkerService()
     moderator_worker_assignment_service = ModeratorWorkerAssignmentService(
         moderator_worker_service, moderator_service
     )
     moderator_manager_service = ModeratorManagerService(
         moderator_service=moderator_service,
-        community_service=community_service,
         moderator_worker_assignment_service=moderator_worker_assignment_service,
         registry=registry,
         event_publisher=event_publisher,
         twitch_bot_id=TWITCH_BOT_ID or None,
     )
 
-    if platform == CommunityPlatform.TWITCH:
+    if platform == ModeratorPlatform.TWITCH:
         twitch_client = TwitchClient(
             client_id=TWITCH_CLIENT_ID,
             client_secret=TWITCH_CLIENT_SECRET or None,
@@ -77,13 +74,12 @@ def worker(id, capacity, host, port, platform, heartbeat_interval):
             event_publisher=event_publisher,
             bot_id=TWITCH_BOT_ID or None,
         )
-    elif platform == CommunityPlatform.DISCORD:
+    elif platform == ModeratorPlatform.DISCORD:
         intents = discord.Intents.default()
         intents.message_content = True
         discord_client = discord.Client(intents=intents)
         ingestion_pipeline = DiscordIngestionPipeline(
             client=discord_client,
-            community_service=community_service,
             moderator_service=moderator_service,
             moderator_worker_assignment_service=moderator_worker_assignment_service,
             moderator_manager_service=moderator_manager_service,

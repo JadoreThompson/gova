@@ -2,7 +2,7 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 
 
 class BaseModeratorService(ABC):
@@ -16,11 +16,11 @@ class BaseModeratorService(ABC):
 
     @property
     @abstractmethod
-    def platform(self) -> CommunityPlatform: ...
+    def platform(self) -> ModeratorPlatform: ...
 
     @property
     @abstractmethod
-    def community_id(self) -> str: ...
+    def platform_community_id(self) -> str: ...
 
     @abstractmethod
     async def process_message(self, message: Any): ...

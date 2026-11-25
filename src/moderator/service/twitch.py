@@ -5,7 +5,7 @@ from collections import deque
 
 import twitchio
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from config import KAFKA_MODERATOR_ACTIONS_TOPIC
 from core.db.session import get_db_session
 from event.publisher import EventPublisher
@@ -64,12 +64,12 @@ class TwitchModeratorService(BaseModeratorService):
         return self._id
 
     @property
-    def community_id(self) -> str:
+    def platform_community_id(self) -> str:
         return self._channel_id
 
     @property
     def platform(self):
-        return CommunityPlatform.TWITCH
+        return ModeratorPlatform.TWITCH
 
     def set_policy(self, policy: str):
         self._policy = policy

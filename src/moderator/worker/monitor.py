@@ -5,7 +5,7 @@ import aiohttp
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from core.db.session import get_db_session
 from lib.util import get_datetime
 from moderator.enums import ModeratorStatus, ModeratorWorkerStatus
@@ -71,7 +71,7 @@ class ModeratorWorkerMonitor:
 
     async def _claim_stale_workers(
         self, now: int
-    ) -> list[tuple[str, str, int, CommunityPlatform]]:
+    ) -> list[tuple[str, str, int, ModeratorPlatform]]:
         async with get_db_session() as db_sess:
             result = await db_sess.scalars(
                 sa.select(ModeratorWorker)
@@ -88,11 +88,11 @@ class ModeratorWorkerMonitor:
                 worker.last_attempt = now
 
             return [
-                (w.id, w.host, w.port, CommunityPlatform(w.platform)) for w in workers
+                (w.id, w.host, w.port, ModeratorPlatform(w.platform)) for w in workers
             ]
 
     async def _ping_all(
-        self, workers: list[tuple[str, str, int, CommunityPlatform]]
+        self, workers: list[tuple[str, str, int, ModeratorPlatform]]
     ) -> list[bool]:
         semaphore = asyncio.Semaphore(self._concurrency)
 
@@ -112,7 +112,7 @@ class ModeratorWorkerMonitor:
             return False
 
     async def _handle_failed_worker(
-        self, worker: tuple[str, str, int, CommunityPlatform]
+        self, worker: tuple[str, str, int, ModeratorPlatform]
     ) -> None:
         worker_id, _, _, platform = worker
 
@@ -157,7 +157,7 @@ class ModeratorWorkerMonitor:
 
     async def _find_available_worker(
         self,
-        platform: CommunityPlatform,
+        platform: ModeratorPlatform,
         exclude_worker_id: str,
         db_sess: AsyncSession,
     ) -> ModeratorWorker | None:

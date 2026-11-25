@@ -3,7 +3,7 @@ import logging
 
 import twitchio
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from core.db.session import get_db_session
 from event.publisher import AIOKafkaEventPublisher
 from moderator.pipeline.base import IngestionPipeline
@@ -66,7 +66,7 @@ class TwitchIngestionPipeline(IngestionPipeline):
         self._bot_id = bot_id
         self._worker_id = worker_id
         self._sync_interval = sync_interval
-        self._platform = CommunityPlatform.TWITCH
+        self._platform = ModeratorPlatform.TWITCH
         self._subscribed_channels: set[str] = set()
         self._logger = logging.getLogger(self.__class__.__name__)
 
@@ -106,7 +106,7 @@ class TwitchIngestionPipeline(IngestionPipeline):
             Retrieve moderator from registry and let it process the message.
             """
             try:
-                moderator = self._registry.get_by_community(
+                moderator = self._registry.get_by_platform_community(
                     self._platform, message.broadcaster.id
                 )
             except ValueError:
@@ -163,15 +163,15 @@ class TwitchIngestionPipeline(IngestionPipeline):
         for moderator in list(self._registry):
             if moderator.platform != self._platform:
                 continue
-            if moderator.community_id in self._subscribed_channels:
+            if moderator.platform_community_id in self._subscribed_channels:
                 continue
 
             try:
-                await self._subscribe(moderator.community_id)
+                await self._subscribe(moderator.platform_community_id)
             except Exception:
                 self._logger.exception(
                     "Failed to subscribe to Twitch channel '%s'",
-                    moderator.community_id,
+                    moderator.platform_community_id,
                 )
 
     async def _subscribe(self, channel_id: str):

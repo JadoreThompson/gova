@@ -3,19 +3,27 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from community.enums import CommunityPlatform
 from config import KAFKA_MODERATOR_EVENTS_TOPIC
 from event.publisher import EventPublisher
+from moderator.enums import ModeratorPlatform
 from moderator.event import (
     ModeratorEvent,
     ModeratorPingEvent,
+    ModeratorPolicyUpdatedEvent,
     ModeratorStartEvent,
     ModeratorStopEvent,
 )
-from moderator.enums import ModeratorStatus
-from moderator.exception import ModeratorNotFoundException
+from moderator.exception import (
+    ModeratorAlreadyExistsException,
+    ModeratorNotFoundException,
+)
 from moderator.model import Moderator
-from moderator.schema import ModeratorCreate, ModeratorResponse, ModeratorUpdate
+from moderator.schema import (
+    ModeratorCreate,
+    ModeratorPolicyUpdate,
+    ModeratorResponse,
+    ModeratorUpdate,
+)
 
 
 class ModeratorService:
@@ -61,9 +69,20 @@ class ModeratorService:
         user_id: uuid.UUID,
         db_sess: AsyncSession,
     ) -> ModeratorResponse:
+        existing = await db_sess.scalar(
+            sa.select(Moderator.id).where(
+                Moderator.platform == request.platform,
+                Moderator.platform_community_id == request.platform_community_id,
+            )
+        )
+        if existing is not None:
+            raise ModeratorAlreadyExistsException()
+
         moderator = Moderator(
             user_id=user_id,
-            community_id=request.community_id,
+            platform=request.platform,
+            platform_community_id=request.platform_community_id,
+            community_policy=request.community_policy,
             name=request.name,
             action_config=request.action_config,
         )
@@ -93,11 +112,17 @@ class ModeratorService:
             raise ModeratorNotFoundException()
         return ModeratorResponse.from_model(moderator)
 
-    async def get_by_community(
-        self, community_id: uuid.UUID, db_sess: AsyncSession
+    async def get_by_platform_community(
+        self,
+        platform: ModeratorPlatform,
+        platform_community_id: str,
+        db_sess: AsyncSession,
     ) -> ModeratorResponse:
         moderator = await db_sess.scalar(
-            sa.select(Moderator).where(Moderator.community_id == community_id)
+            sa.select(Moderator).where(
+                Moderator.platform == platform,
+                Moderator.platform_community_id == platform_community_id,
+            )
         )
         if moderator is None:
             raise ModeratorNotFoundException()
@@ -108,7 +133,8 @@ class ModeratorService:
         user_id: uuid.UUID,
         db_sess: AsyncSession,
         *,
-        community_id: uuid.UUID | None = None,
+        platform: ModeratorPlatform | None = None,
+        platform_community_id: str | None = None,
         page: int = 1,
         limit: int = 50,
     ) -> tuple[list[ModeratorResponse], bool]:
@@ -117,8 +143,10 @@ class ModeratorService:
             .where(Moderator.user_id == user_id)
             .order_by(Moderator.created_at.desc())
         )
-        if community_id is not None:
-            stmt = stmt.where(Moderator.community_id == community_id)
+        if platform is not None:
+            stmt = stmt.where(Moderator.platform == platform)
+        if platform_community_id is not None:
+            stmt = stmt.where(Moderator.platform_community_id == platform_community_id)
 
         result = await db_sess.execute(stmt.offset((page - 1) * limit).limit(limit + 1))
         moderators = list(result.scalars().all())
@@ -152,6 +180,33 @@ class ModeratorService:
         await db_sess.refresh(moderator)
         return ModeratorResponse.from_model(moderator)
 
+    async def update_policy(
+        self,
+        id: uuid.UUID,
+        user_id: uuid.UUID,
+        request: ModeratorPolicyUpdate,
+        db_sess: AsyncSession,
+    ) -> ModeratorResponse:
+        moderator = await db_sess.scalar(
+            sa.select(Moderator).where(
+                Moderator.id == id,
+                Moderator.user_id == user_id,
+            )
+        )
+        if moderator is None:
+            raise ModeratorNotFoundException()
+
+        moderator.community_policy = request.community_policy
+        await db_sess.flush()
+        await db_sess.refresh(moderator)
+
+        await self._event_publisher.publish(
+            ModeratorPolicyUpdatedEvent(moderator_id=moderator.id),
+            KAFKA_MODERATOR_EVENTS_TOPIC,
+            db_sess,
+        )
+        return ModeratorResponse.from_model(moderator)
+
     async def delete(
         self, id: uuid.UUID, user_id: uuid.UUID, db_sess: AsyncSession
     ) -> None:
@@ -164,16 +219,3 @@ class ModeratorService:
         if moderator is None:
             raise ModeratorNotFoundException()
         await db_sess.delete(moderator)
-
-    async def has_active_in_community(
-        self, community_id: uuid.UUID, db_sess: AsyncSession
-    ) -> bool:
-        active_moderator = await db_sess.scalar(
-            sa.select(Moderator.id)
-            .where(
-                Moderator.community_id == community_id,
-                Moderator.status != ModeratorStatus.OFFLINE.value,
-            )
-            .limit(1)
-        )
-        return active_moderator is not None

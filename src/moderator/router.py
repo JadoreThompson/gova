@@ -14,8 +14,14 @@ from config import (
 )
 from core.db.session import get_db_session_dep
 from event.kafka import AIOKafkaConsumerFactory
+from moderator.enums import ModeratorPlatform
 from moderator.exception import ModeratorNotFoundException
-from moderator.schema import ModeratorCreate, ModeratorResponse, ModeratorUpdate
+from moderator.schema import (
+    ModeratorCreate,
+    ModeratorPolicyUpdate,
+    ModeratorResponse,
+    ModeratorUpdate,
+)
 from moderator.service.moderator import ModeratorService
 from security.jwt.exception import JWTException
 from security.jwt.schema import JWTPayload
@@ -50,7 +56,8 @@ async def get_moderator(
 
 @router.get("/", response_model=list[ModeratorResponse])
 async def list_moderators(
-    community_id: uuid.UUID | None = Query(None),
+    platform: ModeratorPlatform | None = Query(None),
+    platform_community_id: str | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     jwt: JWTPayload = Depends(depends_jwt),
@@ -58,7 +65,12 @@ async def list_moderators(
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderators, _ = await service.list(
-        jwt.sub, db_sess, community_id=community_id, page=page, limit=limit
+        jwt.sub,
+        db_sess,
+        platform=platform,
+        platform_community_id=platform_community_id,
+        page=page,
+        limit=limit,
     )
     return moderators
 
@@ -72,6 +84,18 @@ async def update_moderator(
     service: ModeratorService = Depends(get_moderator_service),
 ):
     moderator = await service.update(id, jwt.sub, body, db_sess)
+    return moderator
+
+
+@router.patch("/{id}/policy", response_model=ModeratorResponse)
+async def update_moderator_policy(
+    id: uuid.UUID,
+    body: ModeratorPolicyUpdate,
+    jwt: JWTPayload = Depends(depends_jwt),
+    db_sess: AsyncSession = Depends(get_db_session_dep),
+    service: ModeratorService = Depends(get_moderator_service),
+):
+    moderator = await service.update_policy(id, jwt.sub, body, db_sess)
     return moderator
 
 

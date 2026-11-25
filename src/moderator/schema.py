@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
-from community.enums import CommunityPlatform
-from moderator.enums import ModeratorStatus
+from moderator.enums import ModeratorPlatform, ModeratorStatus
 from moderator.model import (
     ModeratorWorker,
     ModeratorWorkerAssignment,
@@ -15,7 +15,12 @@ from moderator.model import (
 
 
 class ModeratorCreate(BaseModel):
-    community_id: uuid.UUID
+    platform: ModeratorPlatform
+    platform_community_id: str = Field(min_length=1)
+    community_policy: Annotated[
+        str,
+        StringConstraints(min_length=1, strip_whitespace=True),
+    ] = Field(..., min_length=3)
     name: str = Field(min_length=1)
     action_config: dict[str, dict] = Field(default_factory=dict)
 
@@ -25,9 +30,18 @@ class ModeratorUpdate(BaseModel):
     action_config: dict[str, dict] | None = None
 
 
+class ModeratorPolicyUpdate(BaseModel):
+    community_policy: Annotated[
+        str,
+        StringConstraints(min_length=1, strip_whitespace=True),
+    ] = Field(..., min_length=3)
+
+
 class ModeratorResponse(BaseModel):
     id: uuid.UUID
-    community_id: uuid.UUID
+    platform: ModeratorPlatform
+    platform_community_id: str
+    community_policy: str
     name: str
     action_config: dict[str, dict]
     status: ModeratorStatus
@@ -37,7 +51,9 @@ class ModeratorResponse(BaseModel):
     def from_model(cls, moderator: Moderator) -> "ModeratorResponse":
         return cls(
             id=moderator.id,
-            community_id=moderator.community_id,
+            platform=moderator.platform,
+            platform_community_id=moderator.platform_community_id,
+            community_policy=moderator.community_policy,
             name=moderator.name,
             action_config=moderator.action_config,
             status=moderator.status,
@@ -50,12 +66,12 @@ class ModeratorWorkerCreate(BaseModel):
     host: str = Field(min_length=1)
     port: int = Field(ge=1, le=65535)
     capacity: int = Field(ge=1)
-    platform: CommunityPlatform = CommunityPlatform.DISCORD
+    platform: ModeratorPlatform = ModeratorPlatform.DISCORD
 
 
 class ModeratorWorkerResponse(BaseModel):
     id: str
-    platform: CommunityPlatform
+    platform: ModeratorPlatform
     host: str
     port: int
     count: int

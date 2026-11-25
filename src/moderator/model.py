@@ -5,10 +5,9 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 
-from community.enums import CommunityPlatform
 from core.db.model import Base
 from core.db.util import datetime_tz, uuid_pk
-from moderator.enums import ModeratorStatus, ModeratorWorkerStatus
+from moderator.enums import ModeratorPlatform, ModeratorStatus, ModeratorWorkerStatus
 
 
 class Moderator(Base):
@@ -20,11 +19,9 @@ class Moderator(Base):
         sa.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
-    community_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(as_uuid=True),
-        sa.ForeignKey("communities.id", ondelete="CASCADE"),
-        nullable=False,
-    )
+    platform: Mapped[ModeratorPlatform] = mapped_column(sa.String, nullable=False)
+    platform_community_id: Mapped[str] = mapped_column(sa.String, nullable=False)
+    community_policy: Mapped[str] = mapped_column(sa.String, nullable=False)
     name: Mapped[str] = mapped_column(sa.String, nullable=False)
     action_config: Mapped[dict[str, dict]] = mapped_column(JSONB, nullable=False)
     status: Mapped[ModeratorStatus] = mapped_column(
@@ -32,12 +29,24 @@ class Moderator(Base):
     )
     created_at: Mapped[datetime] = datetime_tz()
 
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "platform",
+            "platform_community_id",
+            name="uq_moderators_platform_platform_community_id",
+        ),
+        sa.CheckConstraint(
+            "length(trim(community_policy)) > 0",
+            name="ck_moderators_community_policy_not_empty",
+        ),
+    )
+
 
 class ModeratorWorker(Base):
     __tablename__ = "moderator_workers"
 
     id: Mapped[str] = mapped_column(sa.String, primary_key=True)
-    platform: Mapped[CommunityPlatform] = mapped_column(sa.String, nullable=False)
+    platform: Mapped[ModeratorPlatform] = mapped_column(sa.String, nullable=False)
     host: Mapped[str] = mapped_column(sa.String, nullable=False)
     port: Mapped[int] = mapped_column(sa.Integer, nullable=False)
     count: Mapped[int] = mapped_column(sa.Integer, nullable=False)

@@ -3,7 +3,7 @@ import uuid
 import pytest
 import sqlalchemy as sa
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from core.db.session import get_db_session
 from lib.util import get_datetime
 from moderator.enums import ModeratorStatus, ModeratorWorkerStatus
@@ -33,7 +33,7 @@ def make_monitor(
 
 
 async def register_worker(
-    service, *, platform: CommunityPlatform = CommunityPlatform.DISCORD, capacity: int
+    service, *, platform: ModeratorPlatform = ModeratorPlatform.DISCORD, capacity: int
 ):
     from moderator.schema import ModeratorWorkerCreate
 
@@ -74,7 +74,6 @@ async def make_stale(worker_id, *, last_heartbeat: int = 0, last_attempt: int = 
 @pytest.mark.asyncio(loop_scope="session")
 async def test_poll_migrates_moderators_off_failed_worker(
     moderator_service,
-    community_service,
     create_user,
     moderator_worker_service,
     moderator_worker_assignment_service,
@@ -82,12 +81,15 @@ async def test_poll_migrates_moderators_off_failed_worker(
 ):
     failed = await register_worker(moderator_worker_service, capacity=5)
     available = await register_worker(moderator_worker_service, capacity=1000)
-    moderator = await make_moderator(
-        moderator_service, community_service, create_user()
-    )
+    moderator = await make_moderator(moderator_service, create_user())
 
     await assign_directly(moderator.id, failed.id)
     await make_stale(failed.id)
+    await make_stale(
+        available.id,
+        last_heartbeat=int(get_datetime().timestamp()),
+        last_attempt=0,
+    )
 
     async with get_db_session() as db_sess:
         worker = await db_sess.get(ModeratorWorker, failed.id)
@@ -122,7 +124,6 @@ async def test_poll_migrates_moderators_off_failed_worker(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_poll_sets_moderator_offline_when_no_worker_available(
     moderator_service,
-    community_service,
     create_user,
     moderator_worker_service,
     moderator_worker_assignment_service,
@@ -130,12 +131,10 @@ async def test_poll_sets_moderator_offline_when_no_worker_available(
 ):
     failed = await register_worker(
         moderator_worker_service,
-        platform=CommunityPlatform.YOUTUBE,
+        platform=ModeratorPlatform.YOUTUBE,
         capacity=5,
     )
-    moderator = await make_moderator(
-        moderator_service, community_service, create_user()
-    )
+    moderator = await make_moderator(moderator_service, create_user())
 
     await assign_directly(moderator.id, failed.id)
     await make_stale(failed.id)

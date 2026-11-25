@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import discord
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from config import KAFKA_MODERATOR_ACTIONS_TOPIC
 from core.db.session import get_db_session
 from event.publisher import EventPublisher
@@ -55,12 +55,12 @@ class DiscordModeratorService(BaseModeratorService):
         return self._id
 
     @property
-    def community_id(self) -> str:
+    def platform_community_id(self) -> str:
         return str(self._guild_id)
 
     @property
     def platform(self):
-        return CommunityPlatform.DISCORD
+        return ModeratorPlatform.DISCORD
 
     def set_policy(self, policy: str):
         self._policy = policy

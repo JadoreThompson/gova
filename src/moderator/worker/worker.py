@@ -5,7 +5,7 @@ import uvicorn
 from fastapi import Depends, FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from core.db.session import get_db_session, get_db_session_dep
 from moderator.pipeline.base import IngestionPipeline
 from moderator.schema import ModeratorWorkerCreate
@@ -21,7 +21,7 @@ class ModeratorWorker:
         capacity: int,
         host: str,
         port: int,
-        platform: CommunityPlatform,
+        platform: ModeratorPlatform,
         moderator_worker_service: ModeratorWorkerService,
         moderator_manager_service: ModeratorManagerService,
         pipeline: IngestionPipeline,
@@ -60,7 +60,7 @@ class ModeratorWorker:
         return self._port
 
     @property
-    def platform(self) -> CommunityPlatform:
+    def platform(self) -> ModeratorPlatform:
         return self._platform
 
     @property

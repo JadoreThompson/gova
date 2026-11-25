@@ -8,6 +8,11 @@ class ModeratorNotFoundException(Exception):
         super().__init__("Moderator not found")
 
 
+class ModeratorAlreadyExistsException(Exception):
+    def __init__(self):
+        super().__init__("Moderator already exists for this community")
+
+
 class ModeratorWorkerNotFoundException(Exception):
     def __init__(self):
         super().__init__("Moderator worker not found")
@@ -33,6 +38,10 @@ class ModeratorExceptionHandler(ExceptionHandler):
         ModeratorNotFoundException: HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Moderator not found",
+        ),
+        ModeratorAlreadyExistsException: HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Moderator already exists for this community",
         ),
         ModeratorWorkerNotFoundException: HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

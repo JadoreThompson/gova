@@ -25,15 +25,12 @@ async def register_worker(service, *, capacity: int):
 @pytest.mark.asyncio(loop_scope="session")
 async def test_assign_creates_assignment_record(
     moderator_service,
-    community_service,
     create_user,
     moderator_worker_service,
     moderator_worker_assignment_service,
 ):
     worker = await register_worker(moderator_worker_service, capacity=5)
-    moderator = await make_moderator(
-        moderator_service, community_service, create_user()
-    )
+    moderator = await make_moderator(moderator_service, create_user())
 
     async with get_db_session() as db_sess:
         assignment = await moderator_worker_assignment_service.assign(
@@ -48,16 +45,13 @@ async def test_assign_creates_assignment_record(
 @pytest.mark.asyncio(loop_scope="session")
 async def test_assign_updates_existing_assignment_record(
     moderator_service,
-    community_service,
     create_user,
     moderator_worker_service,
     moderator_worker_assignment_service,
 ):
     first = await register_worker(moderator_worker_service, capacity=5)
     second = await register_worker(moderator_worker_service, capacity=5)
-    moderator = await make_moderator(
-        moderator_service, community_service, create_user()
-    )
+    moderator = await make_moderator(moderator_service, create_user())
 
     async with get_db_session() as db_sess:
         created = await moderator_worker_assignment_service.assign(

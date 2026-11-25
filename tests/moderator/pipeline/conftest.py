@@ -56,7 +56,6 @@ def db_session(monkeypatch):
 def _build_pipeline(client, moderator_manager_service, registry, worker_id):
     return DiscordIngestionPipeline(
         client=client,
-        community_service=MagicMock(),
         moderator_service=MagicMock(),
         moderator_worker_assignment_service=MagicMock(),
         moderator_manager_service=moderator_manager_service,

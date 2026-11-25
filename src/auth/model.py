@@ -4,10 +4,10 @@ from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
-from community.enums import CommunityPlatform
 from core.db.model import Base
 from core.db.util import datetime_tz, uuid_pk
 from lib.util import get_datetime
+from moderator.enums import ModeratorPlatform
 
 
 class PlatformToken(Base):
@@ -19,7 +19,7 @@ class PlatformToken(Base):
         sa.ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
-    platform: Mapped[CommunityPlatform] = mapped_column(sa.String, nullable=False)
+    platform: Mapped[ModeratorPlatform] = mapped_column(sa.String, nullable=False)
     token: Mapped[str] = mapped_column(sa.String, nullable=False)
     refresh_token: Mapped[str | None] = mapped_column(sa.String, nullable=True)
     created_at: Mapped[datetime] = datetime_tz()

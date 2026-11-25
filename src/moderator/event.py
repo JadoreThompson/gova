@@ -5,11 +5,10 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from lib.util import get_datetime
 from moderator.action.discord import DiscordAction
 from moderator.action.twitch import TwitchAction
-
 discord_action_adapter = TypeAdapter(DiscordAction)
 twitch_action_adapter = TypeAdapter(TwitchAction)
 
@@ -22,6 +21,7 @@ class ModeratorEventType(str, Enum):
     STOP = "stop"
     PING = "ping"
     PONG = "pong"
+    POLICY_UPDATED = "policy_updated"
 
 
 class ModeratorEvent(BaseModel):
@@ -31,13 +31,13 @@ class ModeratorEvent(BaseModel):
 
 class ModeratorActionEvent(ModeratorEvent):
     type: Literal[ModeratorEventType.ACTION] = ModeratorEventType.ACTION
-    platform: CommunityPlatform = CommunityPlatform.DISCORD
+    platform: ModeratorPlatform = ModeratorPlatform.DISCORD
     action: Any
     message_id: int | str
 
     @model_validator(mode="after")
     def _validate_action(self) -> "ModeratorActionEvent":
-        if self.platform == CommunityPlatform.TWITCH:
+        if self.platform == ModeratorPlatform.TWITCH:
             self.action = twitch_action_adapter.validate_python(self.action)
         else:
             self.action = discord_action_adapter.validate_python(self.action)
@@ -68,6 +68,12 @@ class ModeratorPongEvent(ModeratorEvent):
     type: Literal[ModeratorEventType.PONG] = ModeratorEventType.PONG
 
 
+class ModeratorPolicyUpdatedEvent(ModeratorEvent):
+    type: Literal[ModeratorEventType.POLICY_UPDATED] = (
+        ModeratorEventType.POLICY_UPDATED
+    )
+
+
 ModeratorInboundEvent = Annotated[
     ModeratorStartEvent | ModeratorStopEvent | ModeratorPingEvent | ModeratorPongEvent,
     Field(discriminator="type"),
@@ -82,6 +88,7 @@ ModeratorEventUnion = Annotated[
         | ModeratorStoppedEvent
         | ModeratorPingEvent
         | ModeratorPongEvent
+        | ModeratorPolicyUpdatedEvent
     ),
     Field(discriminator="type"),
 ]

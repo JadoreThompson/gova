@@ -3,9 +3,8 @@ import logging
 
 import discord
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from config import DISCORD_BOT_TOKEN, KAFKA_MODERATOR_EVENTS_TOPIC
-from community.service import CommunityService
 from core.db.session import get_db_session
 from event.publisher import AIOKafkaEventPublisher
 from moderator.conversation.manager import ConversationManager
@@ -24,7 +23,6 @@ class DiscordIngestionPipeline(IngestionPipeline):
     def __init__(
         self,
         client: discord.Client,
-        community_service: CommunityService,
         moderator_service: ModeratorService,
         moderator_worker_assignment_service: ModeratorWorkerAssignmentService,
         moderator_manager_service: ModeratorManagerService,
@@ -33,14 +31,13 @@ class DiscordIngestionPipeline(IngestionPipeline):
         worker_id: str | None = None,
     ) -> None:
         self._client = client
-        self._community_service = community_service
         self._moderator_service = moderator_service
         self._moderator_worker_assignment_service = moderator_worker_assignment_service
         self._moderator_manager_service = moderator_manager_service
         self._registry = registry
         self._event_publisher = event_publisher
         self._worker_id = worker_id
-        self._platform = CommunityPlatform.DISCORD
+        self._platform = ModeratorPlatform.DISCORD
         self._logger = logging.getLogger(self.__class__.__name__)
 
     def set_worker_id(self, worker_id: str):
@@ -93,7 +90,9 @@ class DiscordIngestionPipeline(IngestionPipeline):
             if guild is None:
                 return
 
-            moderator = self._registry.get_by_community(self._platform, str(guild.id))
+            moderator = self._registry.get_by_platform_community(
+                self._platform, str(guild.id)
+            )
             await moderator.process_message(message)
 
     def _ensure_worker_id(self):

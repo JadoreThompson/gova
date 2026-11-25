@@ -6,7 +6,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, StringConstraints
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from .model import PlatformToken
 
 
@@ -32,7 +32,7 @@ class TwitchTokenResponse(BaseModel):
 class PlatformTokenResponse(BaseModel):
     id: uuid.UUID
     user_id: uuid.UUID
-    platform: CommunityPlatform
+    platform: ModeratorPlatform
     created_at: datetime
     updated_at: datetime
 

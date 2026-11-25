@@ -3,8 +3,8 @@ from typing import Type, TypeVar, cast
 from argon2 import PasswordHasher
 from fastapi import Depends, Request
 
-from auth.service import AuthService
-from community.service import CommunityService
+from auth.service.auth import AuthService
+from auth.service.twitch import TwitchOAuthService
 from config import JWT_COOKIE_ALIAS
 from event.publisher import AIOKafkaEventPublisher, EventPublisher
 from moderator.service.moderator import ModeratorService
@@ -39,12 +39,6 @@ def get_moderator_service(
     return _get_or_create_object(ModeratorService, event_publisher)
 
 
-def get_community_service(
-    moderator_service: ModeratorService = Depends(get_moderator_service),
-) -> CommunityService:
-    return _get_or_create_object(CommunityService, moderator_service)
-
-
 def get_jwt_service() -> JWTService:
     return _get_or_create_object(JWTService)
 
@@ -54,6 +48,10 @@ def get_auth_service(
     jwt_service: JWTService = Depends(get_jwt_service),
 ) -> AuthService:
     return _get_or_create_object(AuthService, user_service, jwt_service)
+
+
+def get_twitch_oauth_service() -> TwitchOAuthService:
+    return _get_or_create_object(TwitchOAuthService)
 
 
 async def depends_jwt(req: Request) -> JWTPayload:

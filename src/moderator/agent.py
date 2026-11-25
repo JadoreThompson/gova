@@ -3,7 +3,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openai import OpenAIProvider
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from config import LLM_API_KEY, LLM_MODEL_NAME, LLM_BASE_URL
 from moderator.action.discord import DiscordAction
 from moderator.action.twitch import TwitchAction
@@ -177,9 +177,9 @@ async def evaluate_message(
     message: MinifiedDiscordMessage | MinifiedTwitchMessage,
     conversation_messages: list[MinifiedDiscordMessage] | list[MinifiedTwitchMessage],
     policy: str,
-    platform: CommunityPlatform = CommunityPlatform.DISCORD,
+    platform: ModeratorPlatform = ModeratorPlatform.DISCORD,
 ) -> EvaluationAgentOutput | TwitchEvaluationAgentOutput:
-    if platform == CommunityPlatform.TWITCH:
+    if platform == ModeratorPlatform.TWITCH:
         return await _evaluate_twitch_message(
             message,  # type: ignore[arg-type]
             conversation_messages,  # type: ignore[arg-type]

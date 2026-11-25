@@ -5,7 +5,7 @@ import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from community.enums import CommunityPlatform
+from moderator.enums import ModeratorPlatform
 from config import TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, TWITCH_REDIRECT_URI
 from ..exception import TwitchOAuthException
 from ..model import PlatformToken
@@ -65,14 +65,14 @@ class TwitchOAuthService:
         platform_token = await db_sess.scalar(
             select(PlatformToken).where(
                 PlatformToken.user_id == user_id,
-                PlatformToken.platform == CommunityPlatform.TWITCH,
+                PlatformToken.platform == ModeratorPlatform.TWITCH,
             )
         )
 
         if platform_token is None:
             platform_token = PlatformToken(
                 user_id=user_id,
-                platform=CommunityPlatform.TWITCH,
+                platform=ModeratorPlatform.TWITCH,
                 token=tokens.access_token,
                 refresh_token=tokens.refresh_token,
             )

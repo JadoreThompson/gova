@@ -18,7 +18,6 @@ from testcontainers.redis import RedisContainer
 
 from auth.service.auth import AuthService
 from auth.service.twitch import TwitchOAuthService
-from community.service import CommunityService
 from config import (
     KAFKA_BOOTSTRAP_SERVERS,
     POSTGRES_DB,
@@ -135,11 +134,6 @@ async def kafka_event_publisher():
 @pytest.fixture
 def moderator_service(kafka_event_publisher):
     return ModeratorService(kafka_event_publisher)
-
-
-@pytest.fixture
-def community_service(moderator_service):
-    return CommunityService(moderator_service=moderator_service)
 
 
 @pytest.fixture
